@@ -8,9 +8,11 @@ using namespace std;
 
 class BitStream{
     public:
-        BitStream(string inFile="", string outFile="");
+        BitStream(string inFile, string outFile);
         void writeBit(int bit);
         int readBit(void);
+        vector<int>getBuffer();
+        void close();
     private:
         vector<int> buffer;
         fstream inFile;
@@ -36,6 +38,10 @@ BitStream::BitStream(string inF, string outF){
     }
 }
 
+vector<int> BitStream::getBuffer(){
+    return buffer;
+}
+
 void BitStream::writeBit(int bit){
     if(outFile.is_open()){
         outFile << bit;
@@ -57,5 +63,17 @@ int BitStream::readBit(){
     cout << "File not Open!!" << endl;
     return 1;
 }
+
+void BitStream::close(void){
+    //BitStream close method
+    if(inFile.is_open()){
+        inFile.close();
+    }
+    if(outFile.is_open()){
+        outFile.close();
+    }
+}
+
+
 
 // 10110001 00000001 
