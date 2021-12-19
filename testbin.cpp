@@ -14,8 +14,8 @@ using namespace std;
 int main(int argc, char* argv[]){
 
 
-    uint64_t numDecimal = 19;
-    uint64_t numUnary = 0;
+    // uint64_t numDecimal = 19;
+    // uint64_t numUnary = 0;
     //int *p;
     
     // if(numDecimal == 0) {
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
     //     numUnary=numUnary-1;
     // }
 
-//    p = decToBinary(2);
+    // p = decToBinary(2);
 
     // for(int i = 0; i< sizeof(p)-1 ; i++){
     //     printf("%d"), *(p+1);
@@ -37,6 +37,6 @@ int main(int argc, char* argv[]){
     Golomb c(5);
     //Golomb a(3);
     c.encoder(23);
-    c.decoder("11110011",5);
+    c.decoder("11110110",5);
 }
 

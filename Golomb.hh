@@ -59,7 +59,7 @@ void Golomb::encoder(int num){
             nBits=b-1;
         }
         else {
-            r = r+pow(2, b);
+            r = r+pow(2, b)-m_;
             nBits = b;
         }
 
@@ -79,19 +79,27 @@ void Golomb::encoder(int num){
 }
 
 void Golomb::decoder(string code, int m){
-    int separation = (int) code.find('0');
+    int value=0;
 
+    int separation = (int) code.find('0');
     string unary_q = code.substr(0,separation);
     string binary_r = code.substr(separation+1);
 
-    int q = sizeof(unary_q)/sizeof(char);
+    int k = ceil(log2(m));
+    int t = pow(2, k) - m;
 
-    cout << "q " << q << endl;
+    int s = unary_q.size();
+    int lBit = binary_r.back()-'0';
+    binary_r.pop_back();
+    int x = stoi(binary_r, 0, 2);
 
-    cout << "unary " << unary_q << endl;
+    if (x<t) {
+        value = s*m + x;
+    }
+    else {
+        x = x*2 + lBit;
+        value = s*m + x-t;
+    }
 
-    cout << "binary " << binary_r << endl;
-
-    
-    
+    cout << "value " << value << endl;
 }
