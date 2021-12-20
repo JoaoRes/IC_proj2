@@ -90,8 +90,13 @@ void Golomb::decoder(string code, int m){
 
     int s = unary_q.size();
     int lBit = binary_r.back()-'0';
-    binary_r.pop_back();
-    int x = stoi(binary_r, 0, 2);
+    int x;
+    if(binary_r.size()>1){
+        binary_r.pop_back();
+        x = stoi(binary_r, 0, 2);
+    }else{
+        x=0;
+    }
 
     if (x<t) {
         value = s*m + x;
