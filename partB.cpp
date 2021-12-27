@@ -18,6 +18,7 @@ SF_INFO sfinfo;
 int readFile(char* inFile);
 int predictor(int frames);
 short folding(short residual);
+short defolding(short n);
 void calculateHistograms(int frames);
 void encoder(int m, int frames);
 void decoder(int m, int frames, char* s1);
@@ -53,6 +54,7 @@ int readFile(char* inFile){
     audioFile=sf_open(inFile, SFM_READ, &sfinfo);
 
     int numItems = (int) sfinfo.frames * sfinfo.channels;
+    cout << "NUMITEMS -> " << numItems << endl; 
     short* buffer = (short * ) malloc(numItems * sizeof(short));
     bufferMono = (short *) malloc(sfinfo.frames * sizeof(short));
 
@@ -60,8 +62,17 @@ int readFile(char* inFile){
 
     for(int i=0; i<cntData ; i+=2){
         int avg=(buffer[i]+buffer[i+1])/2;
-        bufferMono[i/2]= avg;
+        bufferMono[i/2]= (short)avg;
     }
+
+    // char* s1 = "xxxxxx.wav";
+
+    // SNDFILE* outFile;
+    // sfinfo.channels=1;
+    // outFile=sf_open(s1, SFM_WRITE, &sfinfo);
+
+    // int rdData = sf_write_short(outFile, bufferMono, sfinfo.frames);
+
 
     return sfinfo.frames;
 }
@@ -87,16 +98,9 @@ int predictor(int frames){
     }
     
     double mean = (double) sum/frames;
-    int m = log2(log(2) * (mean/sqrt(2)));
+    int m = ceil(-1/log2(mean/(mean+1.0)));
     
     return m;
-}
-
-short folding(short residual){
-    if(residual >= 0) residual = residual*2;
-    else residual = residual*(-2) - 1;
-
-    return residual;
 }
 
 void calculateHistograms(int frames){
@@ -163,20 +167,64 @@ void encoder(int m, int frames){
             }
         }
     }
-
+    
+    while(wByte.length() != 8){
+        wByte+="0";
+    }
+    b.writeNBits(wByte);
     b.close();
 }
 
 void decoder(int m, int frames, char* file){
-    // SNDFILE* outFile;
-    // sfinfo.channels=1;
+    SNDFILE* outFile;
+    sfinfo.channels=1;
 
-    // outFile=sf_open(file, SFM_WRITE, &sfinfo);
-    // short* buffer = (short*) malloc(frames*sizeof(short));
-    // BitStream b("encode_outupt.txt", "");
-    // Golomb g;
-    // for (int i=0 ; )
+    outFile=sf_open(file, SFM_WRITE, &sfinfo);
+    short* buffer = (short*) malloc(frames*sizeof(short));
+    BitStream b("encode_output.txt", "");
+    Golomb g(m);
+    for (int i=0 ; i<frames ; i++){
+        string code = b.readNBits(codes_length.at(i));
+        short nINT = g.decoder(code, m);
+        short n = defolding(nINT);
+        int fLinha;
+        if(i==0){
+            fLinha=0;
+        }else if(i==1){
+            fLinha = buffer[i-1];
+        }else if (i==2){
+            fLinha = 2*buffer[i-1] - buffer[i-2];
+        }else{
+            fLinha = 3*buffer[i-1] - 3*buffer[i-2] + buffer[i-3];
+        }
+        buffer[i]=n+fLinha;
+        cout << i << "/" << frames; 
+        cout << ": code: " << code;
+        cout << " | nINT: " << nINT;
+        cout << " | n: " << n;
+        cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
+    }
 
+    int rdData = sf_write_short(outFile, buffer, frames);
+
+    sf_close(outFile);
+    b.close();
+}
+
+short folding(short residual){
+    if(residual >= 0) residual = residual*2;
+    else residual = residual*(-2) - 1;
+
+    return residual;
+}
+
+short defolding(short n){
+    if(n % 2 == 0){
+        n /= 2;
+    }else{
+        n = (n + 1) / (-2);
+    }
+    return n;
 }
 
 // void lossyCoding(int frames, int nbits){

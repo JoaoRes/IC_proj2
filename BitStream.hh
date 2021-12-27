@@ -36,7 +36,7 @@ BitStream::BitStream(string inF, string outF){
     if(not outF.empty()){
         outFile.open(outF, fstream::out | fstream::app);
     }else{
-        cout << "No out File to open" << endl;
+        cout << "No Out File to open" << endl;
     }
 }
 
@@ -49,9 +49,10 @@ int BitStream::readBit(){
         }
         buffer=aux;
         return bit;
+    }else{
+        cout << "File not Open!!" << endl;
+        return 1;
     }
-    cout << "File not Open!!" << endl;
-    return 1;
 }
 
 string BitStream::readNBits(int nBits){
@@ -67,9 +68,10 @@ string BitStream::readNBits(int nBits){
         buffer=aux;
         return nbits_string;
 
+    }else{
+        cout << "File not Open!!" << endl;
+        return "";
     }
-    cout << "File not Open!!" << endl;
-    return "";
 }
 
 // not 100%, not sure how

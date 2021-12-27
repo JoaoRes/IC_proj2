@@ -7,8 +7,7 @@ class Golomb{
     public:
         Golomb(int m);
         string encoder(int num);
-        void decoder(string code, int m);
-        void decToBinary(int n);
+        short decoder(string code, int m);
     private:
         int m_;
         int q=0;
@@ -77,8 +76,8 @@ string Golomb::encoder(int num){
     return numUnary+numBinary;
 }
 
-void Golomb::decoder(string code, int m){
-    int value=0;
+short Golomb::decoder(string code, int m){
+    short value=0;
 
     int separation = (int) code.find('0');
     string unary_q = code.substr(0,separation);
@@ -104,6 +103,5 @@ void Golomb::decoder(string code, int m){
         x = x*2 + lBit;
         value = s*m + x-t;
     }
-
-    cout << "value " << value << endl;
+    return value;
 }
