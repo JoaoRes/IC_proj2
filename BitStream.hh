@@ -9,10 +9,10 @@ using namespace std;
 class BitStream{
     public:
         BitStream(string inFile, string outFile);
-        void writeBit(int bit);
         int readBit(void);
-        vector<int> readNBits(int nBits);
-        void writeNBits(vector<int> nBits);
+        string readNBits(int nBits);
+        void writeBit(int bit);
+        void writeNBits(string nBits);
         vector<int>getBuffer();
         void close();
     private:
@@ -40,20 +40,11 @@ BitStream::BitStream(string inF, string outF){
     }
 }
 
-
-void BitStream::writeBit(int bit){
-    if(outFile.is_open()){
-        outFile << bit;
-    }else{
-        cout << "File not Open!!" << endl;
-    }
-}
-
 int BitStream::readBit(){
     if(inFile.is_open()){
         vector<int> aux;
         int bit=buffer.at(0);
-        for(int i=1 ; i<buffer.size() ; i++){
+        for(int i=1 ; i<(int)buffer.size() ; i++){
             aux.push_back(buffer[i]);
         }
         buffer=aux;
@@ -63,30 +54,50 @@ int BitStream::readBit(){
     return 1;
 }
 
-vector<int> BitStream::readNBits(int nBits){
-    vector<int> nbits_vector;
+string BitStream::readNBits(int nBits){
     if(inFile.is_open()){
-        vector<int> aux;
-        for(int i=1 ; i<buffer.size() ; i++){
-            aux.push_back(buffer[i]);
-        }
-        for(int i=0 ; i<nBits ; i++){
-            nbits_vector.push_back(buffer[i]);
-        }
+        vector<int>::const_iterator begin = buffer.begin()+nBits;
+        vector<int>::const_iterator end = buffer.end();
+        vector<int> aux(begin, end);
+        string nbits_string="";
+
+        for(int i=0 ; i<nBits ; i++)
+            nbits_string += to_string(buffer[i]);
+
         buffer=aux;
-        return nbits_vector;
+        return nbits_string;
+
     }
     cout << "File not Open!!" << endl;
-    return nbits_vector;
+    return "";
 }
 
-void BitStream::writeNBits(vector<int> nBits){
+// not 100%, not sure how
+void BitStream::writeBit(int bit){
     if(outFile.is_open()){
-        for(int x: nBits){
-            outFile << x;
-        }
+        outFile << bit;
     }else{
         cout << "File not Open!!" << endl;
+    }
+}
+
+void BitStream::writeNBits(string nBits){
+    int bitcount = 0;
+    char currentByte = 0;
+
+    if(outFile.is_open()){
+        for(int i=0 ; i<(int)nBits.length() ; i++){
+            currentByte = currentByte << 1;
+            currentByte |= nBits[i]-'0';
+            bitcount++;
+            if (bitcount == 8){
+                outFile << currentByte;
+                currentByte = 0;
+                bitcount = 0;
+            }
+        }
+    }else{
+        cout << "No output file to write into!" << endl;
     }
 }
 

@@ -14,11 +14,16 @@ int main(int argc, char* argv[]){
     //     bstream.writeBit(x);
     // }
 
-    vector<int> a = bstream.readNBits(5);
+    // int b = bstream.readBit();
+    // cout << b << endl;
+
+    bstream.writeNBits("01100001");
+
+    // vector<int> a = bstream.readNBits(5);
     //printf("%d", a);
 
-    for(int x : a){
-        printf("%d", x);
-    }
+    // for(int x : a){
+    //     printf("%d", x);
+    // }
     bstream.close();
 }

@@ -1,12 +1,12 @@
 #include <iostream>
 #include <math.h>
-#include <bits/stdc++.h>
+#include <bitset>
 using namespace std;
 
 class Golomb{
     public:
         Golomb(int m);
-        void encoder(int num);
+        string encoder(int num);
         void decoder(string code, int m);
         void decToBinary(int n);
     private:
@@ -19,7 +19,7 @@ Golomb::Golomb(int m){
     m_=m;
 }
 
-void Golomb::encoder(int num){
+string Golomb::encoder(int num){
     bitset<64> r_binary;
     uint64_t numUnary = 0;
     string numBinary;
@@ -63,7 +63,6 @@ void Golomb::encoder(int num){
             nBits = b;
         }
 
-        int aux=0;
         string auxStr = bitset<64>(r).to_string();
         string reverse;
 
@@ -74,8 +73,8 @@ void Golomb::encoder(int num){
         numBinary+=reverse;
     }
     
-    cout << "unary " << numUnary  << " binary " << numBinary << endl;
-
+    //cout << "unary " << numUnary  << " binary " << numBinary << endl;
+    return to_string(numUnary)+numBinary;
 }
 
 void Golomb::decoder(string code, int m){
