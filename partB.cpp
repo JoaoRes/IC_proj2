@@ -13,22 +13,34 @@ using namespace std;
 short *bufferMono;
 short *bufferResidual;
 vector<int> codes_length;
+SF_INFO sfinfo;
 
 int readFile(char* inFile);
 int predictor(int frames);
 short folding(short residual);
 void calculateHistograms(int frames);
 void encoder(int m, int frames);
+void decoder(int m, int frames, char* s1);
 void lossyCoding(int frames, int nbits);
 
 int main(int argc, char* argv[]){
     char* s = "AudioSampleFiles/sample01.wav";
+    char* s1 = "xxxxxx.wav";
+
+    // read wav File
     int frames = readFile(s);
+    
+    // ----------- LOSSLESS ENCODER ---------------
     int m = predictor(frames);
     cout << "----------------     OPTIMAL M      ----------------" << endl;
     cout << "M -> " << m << endl;
     calculateHistograms(frames);
     encoder(m, frames);
+
+    // ----------- LOSSLESS DECODING --------------
+    decoder(m, frames, s1);
+
+    
     //lossyCoding(frames, 4);
 
     return 0;
@@ -36,7 +48,6 @@ int main(int argc, char* argv[]){
 
 int readFile(char* inFile){
     SNDFILE* audioFile;
-    SF_INFO sfinfo;
     sfinfo.format=0;
 
     audioFile=sf_open(inFile, SFM_READ, &sfinfo);
@@ -134,7 +145,7 @@ void calculateHistograms(int frames){
 
 void encoder(int m, int frames){
     Golomb g(m);
-    BitStream b(" ", "encode_output.txt");
+    BitStream b("", "encode_output.txt");
     string gCode;
     string wByte;
 
@@ -142,18 +153,30 @@ void encoder(int m, int frames){
         gCode = g.encoder(bufferResidual[i]);
         wByte.append(gCode);
         codes_length.push_back(gCode.length());
-        if(wByte.length() % 8 == 0){
-            b.writeNBits(wByte.substr(0, wByte.length()));
-            wByte="";
-        }else if(wByte.length() > 8){
-            b.writeNBits(wByte.substr(0, 8));
-            wByte.erase(0,8);
-        }else if(wByte.length() < 8){
-            continue;
+        while(wByte.length() >= 8){
+            if(wByte.length() % 8 == 0){
+                b.writeNBits(wByte.substr(0, wByte.length()));
+                wByte="";
+            }else if(wByte.length() > 8){
+                b.writeNBits(wByte.substr(0, 8));
+                wByte.erase(0,8);
+            }
         }
     }
 
     b.close();
+}
+
+void decoder(int m, int frames, char* file){
+    // SNDFILE* outFile;
+    // sfinfo.channels=1;
+
+    // outFile=sf_open(file, SFM_WRITE, &sfinfo);
+    // short* buffer = (short*) malloc(frames*sizeof(short));
+    // BitStream b("encode_outupt.txt", "");
+    // Golomb g;
+    // for (int i=0 ; )
+
 }
 
 // void lossyCoding(int frames, int nbits){

@@ -21,33 +21,33 @@ Golomb::Golomb(int m){
 
 string Golomb::encoder(int num){
     bitset<64> r_binary;
-    uint64_t numUnary = 0;
+    string numUnary;
     string numBinary;
 
     q=floor(num/m_);
     r=num-q*m_;
 
     if(q == 0) {
-        numUnary = 0;
+        numUnary = "0";
     }
-    else if (q>=1) {
+    else if (q >= 1) {
         numUnary=1;
-        for(int i = 0 ; i< q; i++) {
-            numUnary= (numUnary*10)+1;
+        for(int i=0 ; i<q ; i++) {
+            numUnary +="1";
         }
-        numUnary=numUnary-1;
+        numUnary=numUnary+"0";
     }
 
     // if m is power of 2
     if(ceil(log2(m_)) == floor(log2(m_))){
         int firstONE = 0;
         string auxStr = bitset<64>(r).to_string();
-        for (int i=0; i<64; i++){
+        for (int i=0 ; i<64 ; i++){
             if(auxStr[i]=='1' && firstONE==0){
                 firstONE=1;
                 numBinary+=auxStr[i];
             }
-            else if (firstONE==1) {
+            else if (firstONE == 1) {
                 numBinary+=auxStr[i];
             }   
         }
@@ -74,7 +74,7 @@ string Golomb::encoder(int num){
     }
     
     //cout << "unary " << numUnary  << " binary " << numBinary << endl;
-    return to_string(numUnary)+numBinary;
+    return numUnary+numBinary;
 }
 
 void Golomb::decoder(string code, int m){

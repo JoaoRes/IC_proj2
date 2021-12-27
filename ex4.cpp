@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <bitset>
 #include "BitStream.hh"
 #include "Golomb.hh"
 
@@ -34,8 +35,8 @@ int main(int argc, char* argv[]){
     // for(int i = 0; i< sizeof(p)-1 ; i++){
     //     printf("%d"), *(p+1);
     // }
-    Golomb c(4);
+    Golomb c(8);
     //Golomb a(3);
-    c.encoder(13);
-    c.decoder("11101",4);
+    c.encoder(1225);
+    c.decoder("101",4);
 }
