@@ -183,25 +183,26 @@ void decoder(int m, int frames, char* file){
     short* buffer = (short*) malloc(frames*sizeof(short));
     BitStream b("encode_output.txt", "");
     Golomb g(m);
+    string code;
+    short nINT;
+    short n;
+    int fLinha;
     for (int i=0 ; i<frames ; i++){
-        string code = b.readNBits(codes_length.at(i));
-        short nINT = g.decoder(code, m);
-        short n = defolding(nINT);
-        int fLinha;
-        if(i==0){
-            fLinha=0;
+        code = b.readNBits(codes_length.at(i));
+        nINT = g.decoder(code, m);
+        n = defolding(nINT);
+
+        if(i>2){
+            fLinha = (int) (3*buffer[i-1] + 3*buffer[i-2] + buffer[i-3]);
+        }else if(i==2){
+            fLinha = (int) 2*buffer[i-1] + buffer[i-2];
         }else if(i==1){
-            fLinha = buffer[i-1];
-        }else if (i==2){
-            fLinha = 2*buffer[i-1] - buffer[i-2];
+            fLinha = (int) buffer[i-1];
         }else{
-            fLinha = 3*buffer[i-1] - 3*buffer[i-2] + buffer[i-3];
+            fLinha=0;
         }
-        buffer[i]=n+fLinha;
-        cout << i << "/" << frames; 
-        cout << ": code: " << code;
-        cout << " | nINT: " << nINT;
-        cout << " | n: " << n;
+        buffer[i]=(short) n+fLinha;
+        cout << i << "/" << frames << ": code: " << code << " | nINT: " << nINT << " | n: " << n;
         cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
     }
 
@@ -226,6 +227,26 @@ short defolding(short n){
     }
     return n;
 }
+
+
+// for (int i=0 ; i<frames ; i++){
+//         code = b.readNBits(codes_length.at(i));
+//         nINT = g.decoder(code, m);
+//         n = defolding(nINT);
+
+//         if(i>2){
+//             fLinha = 3*buffer[i-1] - 3*buffer[i-2] + buffer[i-3];
+//         }else if(i==2){
+//             fLinha = 2*buffer[i-1] - buffer[i-2];
+//         }else if(i==1){
+//             fLinha = buffer[i-1];
+//         }else{
+//             fLinha=0;
+//         }
+//         buffer[i]=n+fLinha;
+//         // cout << i << "/" << frames << ": code: " << code << " | nINT: " << nINT << " | n: " << n;
+//         // cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
+// }
 
 // void lossyCoding(int frames, int nbits){
 //     // TODO calcular nbits otimo

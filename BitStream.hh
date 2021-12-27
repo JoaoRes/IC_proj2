@@ -17,6 +17,7 @@ class BitStream{
         void close();
     private:
         vector<int> buffer;
+        int index=0;
         fstream inFile;
         fstream outFile;
 };
@@ -55,17 +56,29 @@ int BitStream::readBit(){
     }
 }
 
+// string BitStream::readNBits(int nBits){
+//     if(inFile.is_open()){
+//         string nbits_string="";
+
+//         for(int i=0 ; i<nBits ; i++)
+//             nbits_string += to_string(buffer[i]);
+
+//         buffer.erase(buffer.begin(), buffer.begin()+nBits);
+//         return nbits_string;
+
+//     }else{
+//         cout << "File not Open!!" << endl;
+//         return "";
+//     }
+// }
+
 string BitStream::readNBits(int nBits){
     if(inFile.is_open()){
-        vector<int>::const_iterator begin = buffer.begin()+nBits;
-        vector<int>::const_iterator end = buffer.end();
-        vector<int> aux(begin, end);
         string nbits_string="";
-
-        for(int i=0 ; i<nBits ; i++)
-            nbits_string += to_string(buffer[i]);
-
-        buffer=aux;
+        int stopCond=index+nBits;
+        for( ; index<stopCond ; index++)
+            nbits_string += to_string(buffer[index]);
+            
         return nbits_string;
 
     }else{
