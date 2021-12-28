@@ -13,7 +13,7 @@ class Golomb{
         int r=0;
 };
 
-string decToBinary(int n)
+string Golomb::decToBinary(int n)
 {
     // array to store binary number
     int binaryNum[32];

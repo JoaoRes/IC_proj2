@@ -24,6 +24,7 @@ int calculateHistograms(int frames);
 void encoder(int m, int frames);
 void decoder(int m, int frames, char* s1);
 void lossyCoding(int frames, int entropy);
+void lossyDecoding(int frames);
 
 int main(int argc, char* argv[]){
     char* s = "AudioSampleFiles/sample01.wav";
@@ -45,6 +46,9 @@ int main(int argc, char* argv[]){
 
     // ----------- LOSSY ENCODING ----------------
     lossyCoding(frames, entrMono);
+
+    // ----------- LOSSY DECODING ------------------
+    lossyDecoding(frames);
 
     return 0;
 }
@@ -106,7 +110,7 @@ int calculateHistograms(int frames){
     map<short, int>::iterator it;
 
     for(int i=0; i<frames ; i++){
-        H_residual[defolding(bufferResidual[i])]++;
+        //H_residual[defolding(bufferResidual[i])]++;
         H_mono[bufferMono[i]]++;
     }
 
@@ -133,27 +137,27 @@ int calculateHistograms(int frames){
     MyFile.close();
     cout << "entropy -> " << entrMono << endl;
     
-    cout << "----------------     RESIDUAL     ----------------" << endl;
-    int entr=0;
-    p=0;
-    ofstream MyFile1;
-    MyFile1.open("histResidual.txt");
-    for(it=H_residual.begin(); it!=H_residual.end();it++){
-        // cout << it->first << " ";
-        // for(int i=0 ; i<it->second ; i++){
-        //     cout << "*";
-        // }
-        // cout << endl;
+    // cout << "----------------     RESIDUAL     ----------------" << endl;
+    // int entr=0;
+    // p=0;
+    // ofstream MyFile1;
+    // MyFile1.open("histResidual.txt");
+    // for(it=H_residual.begin(); it!=H_residual.end();it++){
+    //     // cout << it->first << " ";
+    //     // for(int i=0 ; i<it->second ; i++){
+    //     //     cout << "*";
+    //     // }
+    //     // cout << endl;
 
-        std::string temp_first = std::to_string( it->first);
-        std::string temp_second = std::to_string(it->second);
-        MyFile1 << ""+string(temp_first)+"\t"+string(temp_second) <<endl;
+    //     std::string temp_first = std::to_string( it->first);
+    //     std::string temp_second = std::to_string(it->second);
+    //     MyFile1 << ""+string(temp_first)+"\t"+string(temp_second) <<endl;
         
-        p=(double)H_residual[it->first]/(frames);
-        entr+=-p*log(p);
-    }
-    MyFile1.close();
-    cout << "entropy -> " << entr << endl;
+    //     p=(double)H_residual[it->first]/(frames);
+    //     entr+=-p*log(p);
+    // }
+    // MyFile1.close();
+    // cout << "entropy -> " << entr << endl;
 
     return entrMono;
 }
@@ -237,53 +241,45 @@ void lossyCoding(int frames, int entrMono){
     BitStream b("", "lossy_encoded_output.txt");
     string gCode;
     string wByte;
+    string entrMono_Unary;
 
-    int nBits = 16 - (int)round(entrMono);
+    int nBits = 16 - (int)ceil(entrMono);
 
-    b.writeNBits(g.decToBinary(entrMono));
-    b.writeENDL();
+    for(int i=0 ; i<=entrMono ; i++) {
+        entrMono_Unary +="1";
+    }
+    for(int i=entrMono+1 ; i<16 ; i++) {
+        entrMono_Unary +="0";
+    }
 
-    // int readCount;
-    // short ptr[inf.frames*inf.channels];
-    // while((readCount = (int) sf_readf_short(inFile, ptr, 1)) > 0){
-    //     ptr[0]=(ptr[0] >> nbits) << nbits;
-    //     ptr[1]=(ptr[1] >> nbits) << nbits;
-    //     sf_writef_short(outFile, ptr, readCount);
-    // }
+    b.writeNBits(entrMono_Unary);
 
-    // for (int i=0 ; i<frames ; i++){
-    //     gCode = g.encoder(bufferResidual[i], m);
-    //     #ifdef _DEBUG
-    //         cout << "GOLOMB CODE -> " << gCode << endl;
-    //     #endif
-    //     codes_length.push_back(gCode.length());
-    //     #ifdef _DEBUG
-    //         cout << "GOLOMB CODE LENGTH -> " << codes_length.at(i) << endl;
-    //     #endif
-    //     wByte.append(gCode);
-    //     while(wByte.length() >= 8){
-    //         if(wByte.length() % 8 == 0){
-    //             #ifdef _DEBUG
-    //                 cout << "BYTE TO WRITE -> " << wByte.substr(0, wByte.length()) << endl;
-    //             #endif
-    //             b.writeNBits(wByte.substr(0, wByte.length()));
-    //             wByte="";
-    //         }else if(wByte.length() > 8){
-    //             #ifdef _DEBUG
-    //                 cout << "BYTE TO WRITE -> " << wByte.substr(0, 8) << endl;
-    //             #endif
-    //             b.writeNBits(wByte.substr(0, 8));
-    //             wByte.erase(0,8);
-    //         }
-    //     }
-    // }
-    
-    // while(wByte.length() != 8){
-    //     wByte+="0";
-    // }
-    // #ifdef _DEBUG
-    //     cout << "BYTE TO WRITE -> " << wByte << endl;
-    // #endif
-    // b.writeNBits(wByte);
+    short wValue;
+    for (int i=0 ; i<frames ; i++){
+        wValue = bufferMono[i];
+
+        //cout << g.decToBinary(wValue) << endl;
+        wValue >> nBits;
+
+        //cout << g.decToBinary(wValue) << endl;
+        b.writeNBits(g.decToBinary(wValue));
+    }
+
     b.close();
+}
+
+void lossyDecoding(int frames){
+    BitStream b("lossy_encoded_output.txt", "");
+    string entr_s = b.readNBits(16);
+
+    int entropy = (int) entr_s.find('0');
+
+    SNDFILE* outFile;
+    sfinfo.channels=1;
+
+    outFile=sf_open(f, SFM_WRITE, &sfinfo);
+    short* buffer = (short*) malloc(frames*sizeof(short));
+    for()
+
+
 }
