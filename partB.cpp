@@ -160,7 +160,6 @@ void encoder(int m, int frames){
     Golomb g;
     BitStream b("", "encode_output.txt");
     string gCode;
-    string wByte;
 
     for (int i=0 ; i<frames ; i++){
         gCode = g.encoder(bufferResidual[i], m);
@@ -171,31 +170,8 @@ void encoder(int m, int frames){
         #ifdef _DEBUG
             cout << "GOLOMB CODE LENGTH -> " << codes_length.at(i) << endl;
         #endif
-        wByte.append(gCode);
-        while(wByte.length() >= 8){
-            if(wByte.length() % 8 == 0){
-                #ifdef _DEBUG
-                    cout << "BYTE TO WRITE -> " << wByte.substr(0, wByte.length()) << endl;
-                #endif
-                b.writeNBits(wByte.substr(0, wByte.length()));
-                wByte="";
-            }else if(wByte.length() > 8){
-                #ifdef _DEBUG
-                    cout << "BYTE TO WRITE -> " << wByte.substr(0, 8) << endl;
-                #endif
-                b.writeNBits(wByte.substr(0, 8));
-                wByte.erase(0,8);
-            }
-        }
+        b.writeNBits(gCode);
     }
-    
-    while(wByte.length() != 8){
-        wByte+="0";
-    }
-    #ifdef _DEBUG
-        cout << "BYTE TO WRITE -> " << wByte << endl;
-    #endif
-    b.writeNBits(wByte);
     b.close();
 }
 
@@ -253,26 +229,6 @@ short defolding(short n){
     }
     return n;
 }
-
-
-// for (int i=0 ; i<frames ; i++){
-//         code = b.readNBits(codes_length.at(i));
-//         nINT = g.decoder(code, m);
-//         n = defolding(nINT);
-
-//         if(i>2){
-//             fLinha = 3*buffer[i-1] - 3*buffer[i-2] + buffer[i-3];
-//         }else if(i==2){
-//             fLinha = 2*buffer[i-1] - buffer[i-2];
-//         }else if(i==1){
-//             fLinha = buffer[i-1];
-//         }else{
-//             fLinha=0;
-//         }
-//         buffer[i]=n+fLinha;
-//         // cout << i << "/" << frames << ": code: " << code << " | nINT: " << nINT << " | n: " << n;
-//         // cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
-// }
 
 // void lossyCoding(int frames, int nbits){
 //     // TODO calcular nbits otimo
