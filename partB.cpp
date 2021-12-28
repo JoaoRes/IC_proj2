@@ -12,6 +12,7 @@ using namespace std;
 
 short *bufferMono;
 short *bufferResidual;
+short *bufferResidualdefolded;
 vector<int> codes_length;
 SF_INFO sfinfo;
 
@@ -30,7 +31,7 @@ int main(int argc, char* argv[]){
 
     // read wav File
     int frames = readFile(s);
-    // frames = 1;
+    //frames = 1;
     
     // ----------- LOSSLESS ENCODER ---------------
     int m = predictor(frames);
@@ -71,6 +72,7 @@ int readFile(char* inFile){
 
 int predictor(int frames){
     bufferResidual = (short * ) malloc(frames * sizeof(short));
+    bufferResidualdefolded = (short * ) malloc(frames * sizeof(short));
     int sum=0;
     int fLinha;
 
@@ -84,6 +86,7 @@ int predictor(int frames){
         }else{
             fLinha=0;
         }
+        bufferResidualdefolded=bufferMono-fLinha;
         bufferResidual[i] = folding(bufferMono[i] - fLinha);
         sum+=bufferResidual[i];
         #ifdef _DEBUG
@@ -162,21 +165,24 @@ void encoder(int m, int frames){
     for (int i=0 ; i<frames ; i++){
         gCode = g.encoder(bufferResidual[i], m);
         #ifdef _DEBUG
-            cout << gCode << endl;
-        #endif
-        wByte.append(gCode);
-        #ifdef _DEBUG
-            cout << wByte << endl;
+            cout << "GOLOMB CODE -> " << gCode << endl;
         #endif
         codes_length.push_back(gCode.length());
         #ifdef _DEBUG
-            cout << codes_length.at(i) << endl;
+            cout << "GOLOMB CODE LENGTH -> " << codes_length.at(i) << endl;
         #endif
+        wByte.append(gCode);
         while(wByte.length() >= 8){
             if(wByte.length() % 8 == 0){
+                #ifdef _DEBUG
+                    cout << "BYTE TO WRITE -> " << wByte.substr(0, wByte.length()) << endl;
+                #endif
                 b.writeNBits(wByte.substr(0, wByte.length()));
                 wByte="";
             }else if(wByte.length() > 8){
+                #ifdef _DEBUG
+                    cout << "BYTE TO WRITE -> " << wByte.substr(0, 8) << endl;
+                #endif
                 b.writeNBits(wByte.substr(0, 8));
                 wByte.erase(0,8);
             }
@@ -186,6 +192,9 @@ void encoder(int m, int frames){
     while(wByte.length() != 8){
         wByte+="0";
     }
+    #ifdef _DEBUG
+        cout << "BYTE TO WRITE -> " << wByte << endl;
+    #endif
     b.writeNBits(wByte);
     b.close();
 }
@@ -208,9 +217,9 @@ void decoder(int m, int frames, char* file){
         n = defolding(nINT);
 
         if(i>2){
-            fLinha = 3*buffer[i-1] + 3*buffer[i-2] + buffer[i-3];
+            fLinha = 3*buffer[i-1] - 3*buffer[i-2] + buffer[i-3];
         }else if(i==2){
-            fLinha = 2*buffer[i-1] + buffer[i-2];
+            fLinha = 2*buffer[i-1] - buffer[i-2];
         }else if(i==1){
             fLinha = buffer[i-1];
         }else{
@@ -218,7 +227,7 @@ void decoder(int m, int frames, char* file){
         }
         buffer[i]=(short) n+fLinha;
         #ifdef _DEBUG
-            cout << i << "/" << frames << ": code: " << code << " | nINT: " << nINT << " | n: " << n;
+            cout << i << "/" << frames << "-> code: " << code << " | nINT(Residual): " << nINT << " | BUFFER_RESIDUAL: " << bufferResidual[i] << " | n(defolded): " << n << " | Residual Defolded: " << bufferResidualdefolded[i];
             cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
         #endif
     }
