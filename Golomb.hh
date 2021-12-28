@@ -7,6 +7,7 @@ class Golomb{
     public:
         string encoder(int num, int m);
         short decoder(string code, int m);
+        string decToBinary(int n);
     private:
         int q=0;
         int r=0;
