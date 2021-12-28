@@ -20,10 +20,10 @@ int readFile(char* inFile);
 int predictor(int frames);
 short folding(short residual);
 short defolding(short n);
-void calculateHistograms(int frames);
+int calculateHistograms(int frames);
 void encoder(int m, int frames);
 void decoder(int m, int frames, char* s1);
-void lossyCoding(int frames, int nbits);
+void lossyCoding(int frames, int entropy);
 
 int main(int argc, char* argv[]){
     char* s = "AudioSampleFiles/sample01.wav";
@@ -34,17 +34,17 @@ int main(int argc, char* argv[]){
     //frames = 1;
     
     // ----------- LOSSLESS ENCODER ---------------
-    int m = predictor(frames);
-    cout << "----------------     OPTIMAL M      ----------------" << endl;
-    cout << "M -> " << m << endl;
-    calculateHistograms(frames);
-    encoder(m, frames);
+    // int m = predictor(frames);
+    // cout << "----------------     OPTIMAL M      ----------------" << endl;
+    // cout << "M -> " << m << endl;
+    int entrMono = calculateHistograms(frames);
+    // encoder(m, frames);
 
     // ----------- LOSSLESS DECODING --------------
-    decoder(m, frames, s1);
+    // decoder(m, frames, s1);
 
-    
-    //lossyCoding(frames, 4);
+    // ----------- LOSSY ENCODING ----------------
+    lossyCoding(frames, entrMono);
 
     return 0;
 }
@@ -100,7 +100,7 @@ int predictor(int frames){
     return m;
 }
 
-void calculateHistograms(int frames){
+int calculateHistograms(int frames){
     map<short, int> H_residual;
     map<short, int> H_mono;
     map<short, int>::iterator it;
@@ -110,7 +110,7 @@ void calculateHistograms(int frames){
         H_mono[bufferMono[i]]++;
     }
 
-    double entr=0;
+    double entrMono=0;
     double p=0;
     ofstream MyFile;
     MyFile.open("histMono.txt");
@@ -128,13 +128,13 @@ void calculateHistograms(int frames){
         MyFile << ""+string(temp_first)+"\t"+string(temp_second) <<endl;
         
         p=(double)H_mono[it->first]/(frames);
-        entr+=-p*log(p);
+        entrMono+=-p*log(p);
     }
     MyFile.close();
-    cout << "entropy -> " << entr << endl;
+    cout << "entropy -> " << entrMono << endl;
     
     cout << "----------------     RESIDUAL     ----------------" << endl;
-    entr=0;
+    int entr=0;
     p=0;
     ofstream MyFile1;
     MyFile1.open("histResidual.txt");
@@ -154,11 +154,13 @@ void calculateHistograms(int frames){
     }
     MyFile1.close();
     cout << "entropy -> " << entr << endl;
+
+    return entrMono;
 }
 
 void encoder(int m, int frames){
     Golomb g;
-    BitStream b("", "encode_output.txt");
+    BitStream b("", "lossless_encoded_output.txt");
     string gCode;
 
     for (int i=0 ; i<frames ; i++){
@@ -181,7 +183,7 @@ void decoder(int m, int frames, char* file){
 
     outFile=sf_open(file, SFM_WRITE, &sfinfo);
     short* buffer = (short*) malloc(frames*sizeof(short));
-    BitStream b("encode_output.txt", "");
+    BitStream b("lossless_encoded_output.txt", "");
     Golomb g;
     string code;
     short nINT;
@@ -230,11 +232,58 @@ short defolding(short n){
     return n;
 }
 
-// void lossyCoding(int frames, int nbits){
-//     // TODO calcular nbits otimo
+void lossyCoding(int frames, int entrMono){
+    Golomb g;
+    BitStream b("", "lossy_encoded_output.txt");
+    string gCode;
+    string wByte;
+
+    int nBits = 16 - (int)round(entrMono);
+
+    b.writeNBits(g.decToBinary(entrMono));
+    b.writeENDL();
+
+    // int readCount;
+    // short ptr[inf.frames*inf.channels];
+    // while((readCount = (int) sf_readf_short(inFile, ptr, 1)) > 0){
+    //     ptr[0]=(ptr[0] >> nbits) << nbits;
+    //     ptr[1]=(ptr[1] >> nbits) << nbits;
+    //     sf_writef_short(outFile, ptr, readCount);
+    // }
+
+    // for (int i=0 ; i<frames ; i++){
+    //     gCode = g.encoder(bufferResidual[i], m);
+    //     #ifdef _DEBUG
+    //         cout << "GOLOMB CODE -> " << gCode << endl;
+    //     #endif
+    //     codes_length.push_back(gCode.length());
+    //     #ifdef _DEBUG
+    //         cout << "GOLOMB CODE LENGTH -> " << codes_length.at(i) << endl;
+    //     #endif
+    //     wByte.append(gCode);
+    //     while(wByte.length() >= 8){
+    //         if(wByte.length() % 8 == 0){
+    //             #ifdef _DEBUG
+    //                 cout << "BYTE TO WRITE -> " << wByte.substr(0, wByte.length()) << endl;
+    //             #endif
+    //             b.writeNBits(wByte.substr(0, wByte.length()));
+    //             wByte="";
+    //         }else if(wByte.length() > 8){
+    //             #ifdef _DEBUG
+    //                 cout << "BYTE TO WRITE -> " << wByte.substr(0, 8) << endl;
+    //             #endif
+    //             b.writeNBits(wByte.substr(0, 8));
+    //             wByte.erase(0,8);
+    //         }
+    //     }
+    // }
     
-//     int ptr[frames];
-//     for(int i=0 ; i<frames ; i++){
-//         ptr[i]=(bufferMono[i] >>  nbits) << nbits;
-//     }
-// }
+    // while(wByte.length() != 8){
+    //     wByte+="0";
+    // }
+    // #ifdef _DEBUG
+    //     cout << "BYTE TO WRITE -> " << wByte << endl;
+    // #endif
+    // b.writeNBits(wByte);
+    b.close();
+}
