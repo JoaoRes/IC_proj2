@@ -11,7 +11,7 @@ class BitStream{
         BitStream(string inFile, string outFile);
         int readBit(void);
         string readNBits(int nBits);
-        void writeBit(int bit);
+        void writeBit(char bit);
         void writeNBits(string nBits);
         vector<int>getBuffer();
         void close();
@@ -20,6 +20,10 @@ class BitStream{
         int index=0;
         fstream inFile;
         fstream outFile;
+
+        int bitcount = 0;
+        char currentByte = 0;
+
 };
 
 BitStream::BitStream(string inF, string outF){
@@ -66,32 +70,25 @@ string BitStream::readNBits(int nBits){
 }
 
 // not 100%, not sure how
-void BitStream::writeBit(int bit){
+void BitStream::writeBit(char bit){
     if(outFile.is_open()){
-        outFile << bit;
+        currentByte = currentByte << 1;
+        currentByte |= bit-'0';
+        bitcount++;
+        if (bitcount == 8){
+            outFile << currentByte;
+            currentByte = 0;
+            bitcount = 0;
+        }
     }else{
         cout << "File not Open!!" << endl;
     }
 }
 
 void BitStream::writeNBits(string nBits){
-    int bitcount = 0;
-    char currentByte = 0;
-
-    if(outFile.is_open()){
         for(int i=0 ; i<(int)nBits.length() ; i++){
-            currentByte = currentByte << 1;
-            currentByte |= nBits[i]-'0';
-            bitcount++;
-            if (bitcount == 8){
-                outFile << currentByte;
-                currentByte = 0;
-                bitcount = 0;
-            }
+            writeBit(nBits[i]);
         }
-    }else{
-        cout << "No output file to write into!" << endl;
-    }
 }
 
 void BitStream::close(void){
@@ -100,6 +97,10 @@ void BitStream::close(void){
         inFile.close();
     }
     if(outFile.is_open()){
+        if (bitcount != 0){
+            currentByte = currentByte << (8-bitcount);
+            outFile << currentByte;
+        }
         outFile.close();
     }
 }

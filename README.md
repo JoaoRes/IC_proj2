@@ -10,5 +10,5 @@ Part A
 
 
 Part B
-    compile: g++ -g -Wall partB.cpp -o partB -lsndfile
+    compile: g++ -g -Wall partB.cpp -o partB -lsndfile && ./remove.sh
     execute: ./partB
