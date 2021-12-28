@@ -30,7 +30,7 @@ int main(int argc, char* argv[]){
 
     // read wav File
     int frames = readFile(s);
-    frames = 1;
+    // frames = 1;
     
     // ----------- LOSSLESS ENCODER ---------------
     int m = predictor(frames);
@@ -72,17 +72,17 @@ int readFile(char* inFile){
 int predictor(int frames){
     bufferResidual = (short * ) malloc(frames * sizeof(short));
     int sum=0;
+    int fLinha;
 
     for(int i=0 ; i<frames ; i++){
-        int fLinha;
-        if(i==0){
-            fLinha=0;
+        if(i>2){
+            fLinha = 3*bufferMono[i-1] - 3*bufferMono[i-2] + bufferMono[i-3];
+        }else if(i==2){
+            fLinha = 2*bufferMono[i-1] - bufferMono[i-2];
         }else if(i==1){
             fLinha = bufferMono[i-1];
-        }else if (i==2){
-            fLinha = 2*bufferMono[i-1] - bufferMono[i-2];
         }else{
-            fLinha = 3*bufferMono[i-1] - 3*bufferMono[i-2] + bufferMono[i-3];
+            fLinha=0;
         }
         bufferResidual[i] = folding(bufferMono[i] - fLinha);
         sum+=bufferResidual[i];
@@ -201,18 +201,18 @@ void decoder(int m, int frames, char* file){
     string code;
     short nINT;
     short n;
-    int fLinha;
+    short fLinha;
     for (int i=0 ; i<frames ; i++){
         code = b.readNBits(codes_length.at(i));
         nINT = g.decoder(code, m);
         n = defolding(nINT);
 
         if(i>2){
-            fLinha = (int) (3*buffer[i-1] + 3*buffer[i-2] + buffer[i-3]);
+            fLinha = 3*buffer[i-1] + 3*buffer[i-2] + buffer[i-3];
         }else if(i==2){
-            fLinha = (int) 2*buffer[i-1] + buffer[i-2];
+            fLinha = 2*buffer[i-1] + buffer[i-2];
         }else if(i==1){
-            fLinha = (int) buffer[i-1];
+            fLinha = buffer[i-1];
         }else{
             fLinha=0;
         }

@@ -99,17 +99,19 @@ short Golomb::decoder(string code, int m){
 
     //remainder convertion - binary to decimal
     int r = stoi(binary_r, 0, 2);
+    cout << r << endl;
 
     //if m is power of 2
     if(ceil(log2(m)) == floor(log2(m))){
         value+=r;
     }else{ // if m is not power of 2
         int b=ceil(log2(m));
+        cout << b << endl;
 
         if(r<pow(2, b)-m){
             value+=r;
         }else{
-            r= r-sqrt(b) + m;
+            r = r - pow(2, b) + m;
             value+=r;
         }
     }

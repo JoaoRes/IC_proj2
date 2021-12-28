@@ -37,6 +37,6 @@ int main(int argc, char* argv[]){
     // }
     Golomb c;
     //Golomb a(3);
-    cout << c.encoder(253, 74) << endl;
-    cout << c.decoder("1110011111", 74) << endl;
+    cout << c.encoder(14, 5) << endl;
+    cout << c.decoder("110111", 5) << endl;
 }
