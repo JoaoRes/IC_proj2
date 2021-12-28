@@ -41,20 +41,6 @@ BitStream::BitStream(string inF, string outF){
     }
 }
 
-//int BitStream::readBit(){
-//    if(inFile.is_open()){
-//        vector<int> aux;
-//        int bit=buffer.at(0);
-//        for(int i=1 ; i<(int)buffer.size() ; i++){
-//            aux.push_back(buffer[i]);
-//        }
-//        buffer=aux;
-//        return bit;
-//    }else{
-//        cout << "File not Open!!" << endl;
-//        return 1;
-//    }
-//}
 int BitStream::readBit(){
     if(inFile.is_open()){
         return buffer.at(index++);
@@ -63,22 +49,6 @@ int BitStream::readBit(){
         return 1;
     }
 }
-
-// string BitStream::readNBits(int nBits){
-//     if(inFile.is_open()){
-//         string nbits_string="";
-
-//         for(int i=0 ; i<nBits ; i++)
-//             nbits_string += to_string(buffer[i]);
-
-//         buffer.erase(buffer.begin(), buffer.begin()+nBits);
-//         return nbits_string;
-
-//     }else{
-//         cout << "File not Open!!" << endl;
-//         return "";
-//     }
-// }
 
 string BitStream::readNBits(int nBits){
     if(inFile.is_open()){

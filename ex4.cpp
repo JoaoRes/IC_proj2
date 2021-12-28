@@ -35,8 +35,8 @@ int main(int argc, char* argv[]){
     // for(int i = 0; i< sizeof(p)-1 ; i++){
     //     printf("%d"), *(p+1);
     // }
-    Golomb c(8);
+    Golomb c;
     //Golomb a(3);
-    cout << c.encoder(1225) << endl;
-    cout << c.decoder("11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111101",8) << endl;
+    cout << c.encoder(253, 74) << endl;
+    cout << c.decoder("1110011111", 74) << endl;
 }

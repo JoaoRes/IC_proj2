@@ -30,6 +30,7 @@ int main(int argc, char* argv[]){
 
     // read wav File
     int frames = readFile(s);
+    frames = 1;
     
     // ----------- LOSSLESS ENCODER ---------------
     int m = predictor(frames);
@@ -53,8 +54,7 @@ int readFile(char* inFile){
 
     audioFile=sf_open(inFile, SFM_READ, &sfinfo);
 
-    int numItems = (int) sfinfo.frames * sfinfo.channels;
-    cout << "NUMITEMS -> " << numItems << endl; 
+    int numItems = (int) sfinfo.frames * sfinfo.channels; 
     short* buffer = (short * ) malloc(numItems * sizeof(short));
     bufferMono = (short *) malloc(sfinfo.frames * sizeof(short));
 
@@ -65,15 +65,7 @@ int readFile(char* inFile){
         bufferMono[i/2]= (short)avg;
     }
 
-    // char* s1 = "xxxxxx.wav";
-
-    // SNDFILE* outFile;
-    // sfinfo.channels=1;
-    // outFile=sf_open(s1, SFM_WRITE, &sfinfo);
-
-    // int rdData = sf_write_short(outFile, bufferMono, sfinfo.frames);
-
-
+    sf_close(audioFile);
     return sfinfo.frames;
 }
 
@@ -94,7 +86,9 @@ int predictor(int frames){
         }
         bufferResidual[i] = folding(bufferMono[i] - fLinha);
         sum+=bufferResidual[i];
-        //cout << "Residual -> " << bufferResidual[i] << " || Fn -> " << bufferMono[i] << endl;
+        #ifdef _DEBUG
+            cout << "Residual -> " << bufferResidual[i] << " || Fn -> " << bufferMono[i] << endl;
+        #endif
     }
     
     double mean = (double) sum/frames;
@@ -104,9 +98,9 @@ int predictor(int frames){
 }
 
 void calculateHistograms(int frames){
-    map<int, int> H_residual;
-    map<int, int> H_mono;
-    map<int, int>::iterator it;
+    map<short, int> H_residual;
+    map<short, int> H_mono;
+    map<short, int>::iterator it;
 
     for(int i=0; i<frames ; i++){
         H_residual[defolding(bufferResidual[i])]++;
@@ -116,7 +110,7 @@ void calculateHistograms(int frames){
     double entr=0;
     double p=0;
     ofstream MyFile;
-    MyFile.open("monoHist.txt");
+    MyFile.open("histMono.txt");
 
 
     cout << "----------------     MONO      ----------------" << endl;
@@ -140,7 +134,7 @@ void calculateHistograms(int frames){
     entr=0;
     p=0;
     ofstream MyFile1;
-    MyFile1.open("residualHist.txt");
+    MyFile1.open("histResidual.txt");
     for(it=H_residual.begin(); it!=H_residual.end();it++){
         // cout << it->first << " ";
         // for(int i=0 ; i<it->second ; i++){
@@ -160,15 +154,24 @@ void calculateHistograms(int frames){
 }
 
 void encoder(int m, int frames){
-    Golomb g(m);
+    Golomb g;
     BitStream b("", "encode_output.txt");
     string gCode;
     string wByte;
 
     for (int i=0 ; i<frames ; i++){
-        gCode = g.encoder(bufferResidual[i]);
+        gCode = g.encoder(bufferResidual[i], m);
+        #ifdef _DEBUG
+            cout << gCode << endl;
+        #endif
         wByte.append(gCode);
+        #ifdef _DEBUG
+            cout << wByte << endl;
+        #endif
         codes_length.push_back(gCode.length());
+        #ifdef _DEBUG
+            cout << codes_length.at(i) << endl;
+        #endif
         while(wByte.length() >= 8){
             if(wByte.length() % 8 == 0){
                 b.writeNBits(wByte.substr(0, wByte.length()));
@@ -194,7 +197,7 @@ void decoder(int m, int frames, char* file){
     outFile=sf_open(file, SFM_WRITE, &sfinfo);
     short* buffer = (short*) malloc(frames*sizeof(short));
     BitStream b("encode_output.txt", "");
-    Golomb g(m);
+    Golomb g;
     string code;
     short nINT;
     short n;
@@ -214,8 +217,10 @@ void decoder(int m, int frames, char* file){
             fLinha=0;
         }
         buffer[i]=(short) n+fLinha;
-        cout << i << "/" << frames << ": code: " << code << " | nINT: " << nINT << " | n: " << n;
-        cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
+        #ifdef _DEBUG
+            cout << i << "/" << frames << ": code: " << code << " | nINT: " << nINT << " | n: " << n;
+            cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
+        #endif
     }
 
     int rdData = sf_write_short(outFile, buffer, frames);

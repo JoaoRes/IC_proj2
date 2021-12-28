@@ -5,60 +5,70 @@ using namespace std;
 
 class Golomb{
     public:
-        Golomb(int m);
-        string encoder(int num);
+        string encoder(int num, int m);
         short decoder(string code, int m);
     private:
-        int m_;
         int q=0;
         int r=0;
 };
 
-Golomb::Golomb(int m){
-    m_=m;
+string decToBinary(int n)
+{
+    // array to store binary number
+    int binaryNum[32];
+ 
+    // counter for binary array
+    int i = 0;
+    while (n > 0) {
+ 
+        // storing remainder in binary array
+        binaryNum[i] = n % 2;
+        n = n / 2;
+        i++;
+    }
+ 
+    // printing binary array in reverse order
+    string result;
+    for (int j = i - 1; j >= 0; j--)
+        result += to_string(binaryNum[j]);
+
+    return result;
 }
 
-string Golomb::encoder(int num){
+string Golomb::encoder(int i, int m){
     bitset<64> r_binary;
     string numUnary;
     string numBinary;
 
-    q=floor(num/m_);
-    r=num-q*m_;
+    q=floor(i/m);
+    r=i-q*m;
 
     if(q == 0) {
         numUnary = "0";
     }
     else if (q >= 1) {
-        numUnary=1;
-        for(int i=0 ; i<q ; i++) {
+        for(int j=0 ; j<q ; j++) {
             numUnary +="1";
         }
         numUnary=numUnary+"0";
     }
 
     // if m is power of 2
-    if(ceil(log2(m_)) == floor(log2(m_))){
-        int firstONE = 0;
-        string auxStr = bitset<64>(r).to_string();
-        for (int i=0 ; i<64 ; i++){
-            if(auxStr[i]=='1' && firstONE==0){
-                firstONE=1;
-                numBinary+=auxStr[i];
-            }
-            else if (firstONE == 1) {
-                numBinary+=auxStr[i];
-            }   
+    if(ceil(log2(m)) == floor(log2(m))){
+        if(r==0){
+            numBinary="0";
+        }else{
+            numBinary=decToBinary(r);
         }
     } else { // if m is not power of 2
-        int b=ceil(log2(m_));
+        int b=ceil(log2(m));
         int nBits;
 
-        if(r<b){
+        if(r<pow(2, b)-m){
             nBits=b-1;
         }
         else {
-            r = r+pow(2, b)-m_;
+            r = r+pow(2, b)-m;
             nBits = b;
         }
 
@@ -83,25 +93,26 @@ short Golomb::decoder(string code, int m){
     string unary_q = code.substr(0,separation);
     string binary_r = code.substr(separation+1);
 
-    int k = ceil(log2(m));
-    int t = pow(2, k) - m;
+    //quotient convertion - unary to decimal
+    int q = unary_q.size();
+    value = q*m;
 
-    int s = unary_q.size();
-    int lBit = binary_r.back()-'0';
-    int x;
-    if(binary_r.size()>1){
-        binary_r.pop_back();
-        x = stoi(binary_r, 0, 2);
-    }else{
-        x=0;
+    //remainder convertion - binary to decimal
+    int r = stoi(binary_r, 0, 2);
+
+    //if m is power of 2
+    if(ceil(log2(m)) == floor(log2(m))){
+        value+=r;
+    }else{ // if m is not power of 2
+        int b=ceil(log2(m));
+
+        if(r<pow(2, b)-m){
+            value+=r;
+        }else{
+            r= r-sqrt(b) + m;
+            value+=r;
+        }
     }
 
-    if (x<t) {
-        value = s*m + x;
-    }
-    else {
-        x = x*2 + lBit;
-        value = s*m + x-t;
-    }
     return value;
 }
