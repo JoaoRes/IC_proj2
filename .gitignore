@@ -1,1 +1,6 @@
 .idea/*
+ex4
+*.wav
+encode_output.txt
+histMono.txt
+histResidual.txt
