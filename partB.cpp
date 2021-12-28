@@ -19,7 +19,7 @@ int readFile(char* inFile);
 int predictor(int frames);
 short folding(short residual);
 short defolding(short n);
-void calculateHistograms(int frames);
+void calculateHistograms(int frames,const char *filename);
 void encoder(int m, int frames);
 void decoder(int m, int frames, char* s1);
 void lossyCoding(int frames, int nbits);
@@ -28,6 +28,14 @@ int main(int argc, char* argv[]){
     char* s = "AudioSampleFiles/sample01.wav";
     char* s1 = "xxxxxx.wav";
 
+//    if(argc==1){
+//        printf("\nNo Extra Command Line Argument Passed Other Than Program Name");
+//        exit(1);
+//    }
+    if(argc<1){
+        printf("\nMissing arguments");
+        exit(1);
+    }
     // read wav File
     int frames = readFile(s);
     
@@ -35,7 +43,7 @@ int main(int argc, char* argv[]){
     int m = predictor(frames);
     cout << "----------------     OPTIMAL M      ----------------" << endl;
     cout << "M -> " << m << endl;
-    calculateHistograms(frames);
+    calculateHistograms(frames,argv[1]);
     encoder(m, frames);
 
     // ----------- LOSSLESS DECODING --------------
@@ -103,10 +111,10 @@ int predictor(int frames){
     return m;
 }
 
-void calculateHistograms(int frames){
-    map<float, int> H_residual;
-    map<float, int> H_mono;
-    map<float, int>::iterator it;
+void calculateHistograms(int frames,const char *filename){
+    map<int, int> H_residual;
+    map<int, int> H_mono;
+    map<int, int>::iterator it;
 
     for(int i=0; i<frames ; i++){
         H_residual[bufferResidual[i]]++;
@@ -115,6 +123,9 @@ void calculateHistograms(int frames){
 
     double entr=0;
     double p=0;
+    ofstream MyFile;
+    MyFile.open(filename);
+
 
     cout << "----------------     MONO      ----------------" << endl;
     for(it=H_mono.begin(); it!=H_mono.end();it++){
@@ -123,11 +134,14 @@ void calculateHistograms(int frames){
         //     cout << "*";
         // }
         // cout << endl;
+        std::string temp_first = std::to_string( it->first);
+        std::string temp_second = std::to_string(it->second);
+        MyFile << ""+string(temp_first)+"\t"+string(temp_second) <<endl;
         
         p=(double)H_mono[it->first]/(frames);
         entr+=-p*log(p);
     }
-
+    MyFile.close();
     cout << "entropy -> " << entr << endl;
     
     cout << "----------------     RESIDUAL     ----------------" << endl;
