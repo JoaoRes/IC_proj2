@@ -25,7 +25,7 @@ g++ -g x.cpp -o x
 ## PartB
 
 ### Lossless
-####**Compile:** 
+#### **Compile:** 
 ```console 
 g++ -g losslessCodec_audio.cpp -o lossless -lsndfile && ./remove.sh 
 ```
