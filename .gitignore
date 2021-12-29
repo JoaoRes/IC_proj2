@@ -3,6 +3,7 @@ ex4
 *.wav
 encode_output.txt
 histMONO.txt
+histMono.txt
 histRESIDUAL.txt
 lossy_encoded_output.txt
 lossless_encoded_output.txt
@@ -15,6 +16,7 @@ ex2
 ex4
 open
 losslessCodec_audio
+lossyCodec_audio
 lossy
 img.bin
 lossless

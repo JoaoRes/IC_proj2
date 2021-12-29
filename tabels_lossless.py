@@ -5,7 +5,7 @@ table = [['Nome', 'Duracao Total', 'Duracao Preditor(ms)', 'Duracao Histograma(m
 'Duracao Descodificar(ms)', 'M','Original(kB)', 'Comprimido(kB)', 'Compression'] ]
 
 info = []
-for n in range(1,2):
+for n in range(1,8):
 	f = open(str(n)+".prop", "r")
 	for i,x in enumerate(f):
 		if int(i) == 0 :

@@ -1,7 +1,7 @@
 echo "Compiling code"
 g++ -g -Wall -D _TIMES  losslessCodec_audio.cpp -o lossless -lsndfile
 echo "Code Compiled"
-for i in $(seq 1 6)
+for i in $(seq 1 7)
 do
    echo "Doing iteration $i"
    ./remove.sh &&
