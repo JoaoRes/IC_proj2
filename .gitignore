@@ -4,6 +4,7 @@ ex4
 encode_output.txt
 histMono.txt
 histResidual.txt
+lossy_encoded_output.txt
 
 #Binary files
 partB
