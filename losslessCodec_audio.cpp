@@ -107,7 +107,7 @@ void losslessDecoder(int m, int frames, char* file, SF_INFO sfinfo){
         code = b.readNBits(codes_length.at(i));
         nINT = g.decoder(code, m);
         n = gf.defolding(nINT);
-        fLinha_calc(i, buffer);
+        fLinha = fLinha_calc(i, buffer);
         buffer[i]=(short) n+fLinha;
         #ifdef _DEBUG
             // cout << i << "/" << frames << "-> code: " << code << " | nINT(Residual): " << nINT << " | BUFFER_RESIDUAL: " << bufferResidual[i] << " | n(defolded): " << n;
