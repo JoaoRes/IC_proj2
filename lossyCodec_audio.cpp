@@ -49,43 +49,11 @@ int readFile(char* inFile){
     return sfinfo.frames;
 }
 
-int predictor(int frames){
-    bufferResidual = (short * ) malloc(frames * sizeof(short));
-    bufferResidualdefolded = (short * ) malloc(frames * sizeof(short));
-    int sum=0;
-    int fLinha;
-
-    for(int i=0 ; i<frames ; i++){
-        if(i>2){
-            fLinha = 3*bufferMono[i-1] - 3*bufferMono[i-2] + bufferMono[i-3];
-        }else if(i==2){
-            fLinha = 2*bufferMono[i-1] - bufferMono[i-2];
-        }else if(i==1){
-            fLinha = bufferMono[i-1];
-        }else{
-            fLinha=0;
-        }
-        bufferResidualdefolded=bufferMono-fLinha;
-        bufferResidual[i] = folding(bufferMono[i] - fLinha);
-        sum+=bufferResidual[i];
-        #ifdef _DEBUG
-            cout << "Residual -> " << bufferResidual[i] << " || Fn -> " << bufferMono[i] << endl;
-        #endif
-    }
-    
-    double mean = (double) sum/frames;
-    int m = ceil(-1/log2(mean/(mean+1.0)));
-    
-    return m;
-}
-
 int calculateHistograms(int frames){
-    map<short, int> H_residual;
     map<short, int> H_mono;
     map<short, int>::iterator it;
 
     for(int i=0; i<frames ; i++){
-        //H_residual[defolding(bufferResidual[i])]++;
         H_mono[bufferMono[i]]++;
     }
 
@@ -111,88 +79,8 @@ int calculateHistograms(int frames){
     }
     MyFile.close();
     cout << "entropy -> " << entrMono << endl;
-    
-    // cout << "----------------     RESIDUAL     ----------------" << endl;
-    // int entr=0;
-    // p=0;
-    // ofstream MyFile1;
-    // MyFile1.open("histResidual.txt");
-    // for(it=H_residual.begin(); it!=H_residual.end();it++){
-    //     // cout << it->first << " ";
-    //     // for(int i=0 ; i<it->second ; i++){
-    //     //     cout << "*";
-    //     // }
-    //     // cout << endl;
-
-    //     std::string temp_first = std::to_string( it->first);
-    //     std::string temp_second = std::to_string(it->second);
-    //     MyFile1 << ""+string(temp_first)+"\t"+string(temp_second) <<endl;
-        
-    //     p=(double)H_residual[it->first]/(frames);
-    //     entr+=-p*log(p);
-    // }
-    // MyFile1.close();
-    // cout << "entropy -> " << entr << endl;
 
     return ceil(entrMono);
-}
-
-void encoder(int m, int frames){
-    Golomb g;
-    BitStream b("", "lossless_encoded_output.txt");
-    string gCode;
-
-    for (int i=0 ; i<frames ; i++){
-        gCode = g.encoder(bufferResidual[i], m);
-        #ifdef _DEBUG
-            cout << "GOLOMB CODE -> " << gCode << endl;
-        #endif
-        codes_length.push_back(gCode.length());
-        #ifdef _DEBUG
-            cout << "GOLOMB CODE LENGTH -> " << codes_length.at(i) << endl;
-        #endif
-        b.writeNBits(gCode);
-    }
-    b.close();
-}
-
-void decoder(int m, int frames, char* file){
-    SNDFILE* outFile;
-    sfinfo.channels=1;
-
-    outFile=sf_open(file, SFM_WRITE, &sfinfo);
-    short* buffer = (short*) malloc(frames*sizeof(short));
-    BitStream b("lossless_encoded_output.txt", "");
-    Golomb g;
-    string code;
-    short nINT;
-    short n;
-    short fLinha;
-    for (int i=0 ; i<frames ; i++){
-        code = b.readNBits(codes_length.at(i));
-        nINT = g.decoder(code, m);
-        n = defolding(nINT);
-
-        if(i>2){
-            fLinha = 3*buffer[i-1] - 3*buffer[i-2] + buffer[i-3];
-        }else if(i==2){
-            fLinha = 2*buffer[i-1] - buffer[i-2];
-        }else if(i==1){
-            fLinha = buffer[i-1];
-        }else{
-            fLinha=0;
-        }
-        buffer[i]=(short) n+fLinha;
-        #ifdef _DEBUG
-            cout << i << "/" << frames << "-> code: " << code << " | nINT(Residual): " << nINT << " | BUFFER_RESIDUAL: " << bufferResidual[i] << " | n(defolded): " << n << " | Residual Defolded: " << bufferResidualdefolded[i];
-            cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
-        #endif
-    }
-
-    int rdData = sf_write_short(outFile, buffer, frames);
-
-    sf_close(outFile);
-    b.close();
 }
 
 short folding(short residual){
@@ -224,7 +112,7 @@ void lossyCoding(int frames, int entrMono){
         cout << "entropy ="<<entrMono<<endl;
     #endif
 
-    int nBits = 16 -entrMono;// (int)ceil(entrMono);
+    int nBits = 16 - entrMono;// (int)ceil(entrMono);
 
     for(int i=0 ; i<=entrMono-1 ; i++) {
         entrMono_Unary +="1";
