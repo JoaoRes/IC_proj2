@@ -30,4 +30,6 @@ int main(int argc, char* argv[]){
     cout << a << endl; // deverá ser impresso os bits anteriormente escritos no ficheiro
 
     bstream1.close();
+
+    return 0;
 }
