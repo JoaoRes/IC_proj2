@@ -26,32 +26,7 @@ void decoder(int m, int frames, char* s1);
 void lossyCoding(int frames, int entropy);
 void lossyDecoding(int frames);
 
-int main(int argc, char* argv[]){
-    char* s = "AudioSampleFiles/sample01.wav";
-    char* s1 = "xxxxxx.wav";
 
-    // read wav File
-    int frames = readFile(s);
-    //frames = 1;
-    
-    // ----------- LOSSLESS ENCODER ---------------
-    // int m = predictor(frames);
-    // cout << "----------------     OPTIMAL M      ----------------" << endl;
-    // cout << "M -> " << m << endl;
-    int entrMono = calculateHistograms(frames);
-    // encoder(m, frames);
-
-    // ----------- LOSSLESS DECODING --------------
-    // decoder(m, frames, s1);
-
-    // ----------- LOSSY ENCODING ----------------
-    lossyCoding(frames, entrMono);
-
-    // ----------- LOSSY DECODING ------------------
-    lossyDecoding(frames);
-
-    return 0;
-}
 
 int readFile(char* inFile){
     SNDFILE* audioFile;
@@ -159,7 +134,7 @@ int calculateHistograms(int frames){
     // MyFile1.close();
     // cout << "entropy -> " << entr << endl;
 
-    return entrMono;
+    return ceil(entrMono);
 }
 
 void encoder(int m, int frames){
@@ -237,49 +212,154 @@ short defolding(short n){
 }
 
 void lossyCoding(int frames, int entrMono){
+    cout << "Nframes ="<<frames<<endl;
     Golomb g;
     BitStream b("", "lossy_encoded_output.txt");
-    string gCode;
-    string wByte;
     string entrMono_Unary;
+    string binary_frames = bitset<32>(frames).to_string(); //to binary
+    cout<<binary_frames<<"\n";
+    #ifdef _DEBUG
+        cout << "Nframes ="<<frames<<endl;
+        cout<<binary_frames<<"\n";
+        cout << "entropy ="<<entrMono<<endl;
+    #endif
 
-    int nBits = 16 - (int)ceil(entrMono);
+    int nBits = 16 -entrMono;// (int)ceil(entrMono);
 
-    for(int i=0 ; i<=entrMono ; i++) {
+    for(int i=0 ; i<=entrMono-1 ; i++) {
         entrMono_Unary +="1";
     }
-    for(int i=entrMono+1 ; i<16 ; i++) {
+    for(int i=entrMono ; i<16 ; i++) {
         entrMono_Unary +="0";
     }
 
     b.writeNBits(entrMono_Unary);
-
+    b.writeNBits(binary_frames);
     short wValue;
     for (int i=0 ; i<frames ; i++){
         wValue = bufferMono[i];
 
         //cout << g.decToBinary(wValue) << endl;
-        wValue >> nBits;
+        #ifdef _DEBUG
+            string binary_before  ("");
+            int mask0 = 1;
+            for(int i = 0; i < 16; i++)
+            {
+                if((mask0&wValue) >= 1)
+                    binary_before = "1"+binary_before;
+                else
+                    binary_before = "0"+binary_before;
+                mask0<<=1;
+            }
+        #endif
+        wValue = (wValue >> nBits) << nBits;
+        #ifdef _DEBUG
+                string binary_shifted  ("");
+                mask0 = 1;
+                for(int i = 0; i < 16; i++)
+                {
+                    if((mask0&wValue) >= 1)
+                        binary_shifted = "1"+binary_shifted;
+                    else
+                        binary_shifted = "0"+binary_shifted;
+                    mask0<<=1;
+                }
+        #endif
+        string binary  ("");
+        int mask = 1;
+        mask<<=nBits;
+        for(int i = nBits; i < 16; i++)
+        {
+            if((mask&wValue) >= 1)
+                binary = "1"+binary;
+            else
+                binary = "0"+binary;
+            mask<<=1;
+        }
 
+        #ifdef _DEBUG
+            cout << "nbits= ="<<nBits<<endl;
+            cout<< "binary_before=  "<<binary_before<<endl;
+            cout << "binary_shifted= "<<binary_shifted<<endl;
+            cout<<"binary ="<<binary<<endl;
+
+        #endif
         //cout << g.decToBinary(wValue) << endl;
-        b.writeNBits(g.decToBinary(wValue));
+        b.writeNBits(binary);
     }
 
     b.close();
 }
 
-void lossyDecoding(int frames){
+void lossyDecoding(char* file){
     BitStream b("lossy_encoded_output.txt", "");
     string entr_s = b.readNBits(16);
-
+    string binary_frames = b.readNBits(32);
     int entropy = (int) entr_s.find('0');
+    if (entropy == -1)
+        entropy = 16;
+    cout << "entropy ="<<entropy<<endl;
+    int frames = stoi(binary_frames,0,2);
+    #ifdef _DEBUG
+        cout << "entropy ="<<entropy<<endl;
+        cout << "binary_frames ="<<binary_frames<<endl;
+        cout << "frames ="<<frames<<endl;
+    #endif
 
     SNDFILE* outFile;
     sfinfo.channels=1;
 
-    outFile=sf_open(f, SFM_WRITE, &sfinfo);
+    outFile=sf_open(file, SFM_WRITE, &sfinfo);
     short* buffer = (short*) malloc(frames*sizeof(short));
-    for()
+
+    string code;
+    short n;
+
+    for (int i=0 ; i<frames ; i++){
+        code = b.readNBits(entropy);
+        n = (short) stoul(code,0,2);
+
+        n = n << (16-entropy);
+
+        buffer[i]= n;
+
+        #ifdef _DEBUG1
+                cout << "entropy = "<<entropy<<" frames = "<< frames <<"/"<< i <<" code= "<< code << " n = "<<n<<endl;
+        #endif
+    }
+    sf_write_short(outFile, buffer, frames);
+
+    sf_close(outFile);
+    b.close();
 
 
+
+}
+
+int main(int argc, char* argv[]){
+    char* s = "AudioSampleFiles/sample01.wav";
+    char* s1 = "xxxxxx.wav";
+    char* s2 = "zzz.wav";
+
+    // read wav File
+    int frames = readFile(s);
+    //frames = 1;
+
+    // ----------- LOSSLESS ENCODER ---------------
+    // int m = predictor(frames);
+    // cout << "----------------     OPTIMAL M      ----------------" << endl;
+    // cout << "M -> " << m << endl;
+    int entrMono = calculateHistograms(frames);
+    // encoder(m, frames);
+
+    // ----------- LOSSLESS DECODING --------------
+    // decoder(m, frames, s1);
+
+    // ----------- LOSSY ENCODING ----------------
+    lossyCoding(frames, entrMono);
+
+    // ----------- LOSSY DECODING ------------------
+    lossyDecoding(s2);
+
+    return 0;
 }
