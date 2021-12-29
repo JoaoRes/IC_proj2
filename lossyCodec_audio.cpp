@@ -2,11 +2,12 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string>
 #include <sndfile.h>
 #include <map>
 #include "BitStream.hh"
 #include "Golomb.hh"
+#include <chrono>
+using namespace std::chrono;
 
 using namespace std;
 
@@ -225,29 +226,47 @@ void lossyDecoding(char* file){
 }
 
 int main(int argc, char* argv[]){
-    char* s = "AudioSampleFiles/sample01.wav";
-    char* s1 = "xxxxxx.wav";
-    char* s2 = "zzz.wav";
+    #ifdef _TIMES
+        auto start = high_resolution_clock::now();
+    #endif
+    char s2[] = "zzz.wav";
 
+    if(argc<1){
+        printf("\nMissing arguments");
+        exit(1);
+    }
     // read wav File
-    int frames = readFile(s);
-    //frames = 1;
+    int frames = readFile(argv[1]);
 
-    // ----------- LOSSLESS ENCODER ---------------
-    // int m = predictor(frames);
-    // cout << "----------------     OPTIMAL M      ----------------" << endl;
-    // cout << "M -> " << m << endl;
+    //calculating entropy
+    #ifdef _TIMES
+        auto hist_start = high_resolution_clock::now();
+    #endif
     int entrMono = calculateHistograms(frames);
-    // encoder(m, frames);
-
-    // ----------- LOSSLESS DECODING --------------
-    // decoder(m, frames, s1);
-
+    #ifdef _TIMES
+        auto hist_end = high_resolution_clock::now();
+        auto lossyCoding_start = high_resolution_clock::now();
+    #endif
     // ----------- LOSSY ENCODING ----------------
     lossyCoding(frames, entrMono);
-
+    #ifdef _TIMES
+        auto lossyCoding_end = high_resolution_clock::now();
+        auto lossyDecoding_start = high_resolution_clock::now();
+    #endif
     // ----------- LOSSY DECODING ------------------
     lossyDecoding(s2);
+    #ifdef _TIMES
+        auto lossyDecoding_end = high_resolution_clock::now();
 
+        auto end = high_resolution_clock::now();
+        auto hist_duration = duration_cast<milliseconds>(hist_end - hist_start);
+        auto lossyCoding_duration = duration_cast<milliseconds>(lossyCoding_end - lossyCoding_start);
+        auto lossyDecoding_duration = duration_cast<milliseconds>(lossyDecoding_end - lossyDecoding_start);
+        auto total_duration = duration_cast<milliseconds>(end - start);
+        cout << "Histogram Time = "<< (double)hist_duration.count()/1000 << " seconds | "<< hist_duration.count() << " milliseconds" << endl;
+        cout << "Encoding Time = "<< (double)lossyCoding_duration.count()/1000 << " seconds | "<< lossyCoding_duration.count() << " milliseconds" << endl;
+        cout << "Decoding Time = "<< (double)lossyDecoding_duration.count()/1000 << " seconds | "<< lossyDecoding_duration.count() << " milliseconds" << endl;
+        cout << "Total Time = "<< (double)total_duration.count()/1000 << " seconds | "<< total_duration.count() << " milliseconds" << endl;
+    #endif
     return 0;
 }
