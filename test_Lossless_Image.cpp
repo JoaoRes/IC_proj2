@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
 
     LosslessCodec llc;
 
-    llc.encode("imagens_PPM/airplane.ppm");
+    llc.encode(argv[1]);
 
     llc.decode("img.bin");
 
