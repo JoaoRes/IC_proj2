@@ -18,7 +18,7 @@ vector<int> codes_length;
 
 class LosslessCodec{
     public:
-        void encode(string path);
+        int encode(string path);
         void decode(string path);
     private:
         Mat yuv;
@@ -34,8 +34,9 @@ void LosslessCodec::YUV420(Mat img, Mat* yuv_channels){
     cvtColor(img, img, COLOR_RGB2YUV);
     // cvtColor(img, img, COLOR_RGB2YUV_I420);
     split(img, yuv_channels);
-
-    imshow("img", yuv_channels[0]);
+    #ifndef _NOSHOW
+        imshow("img", yuv_channels[0]);
+    #endif
     Mat tmp_u (img.size().height/2, img.size().width/2, CV_8UC1);
     Mat tmp_v (img.size().height/2, img.size().width/2, CV_8UC1);
 
@@ -143,7 +144,7 @@ Mat LosslessCodec::predictorDecode(Mat img){
 
 
 GeneralFunctions gf;
-void LosslessCodec::encode(string path){
+int LosslessCodec::encode(string path){
     
     Mat img = imread(path);
     Mat channels[3];
@@ -189,6 +190,7 @@ void LosslessCodec::encode(string path){
     double media =0;
     media = (calculate_entropy(channels[0]) + calculate_entropy(channels[1])+ calculate_entropy(channels[2])) / 3;
     cout <<"MEDIA ENTROPIA -> "<< media << endl;
+    return ceil(media);
 }
 
 void LosslessCodec::decode(String path){
@@ -196,7 +198,6 @@ void LosslessCodec::decode(String path){
     string code;
     Golomb g;
     short nINt;
-    short n;
     int m[3], altura[3], largura[3];
     int i=0;
     int k;
@@ -278,11 +279,13 @@ void LosslessCodec::decode(String path){
     merge(channels,3,output);
 
     cvtColor(output,output, COLOR_YUV2RGB);
-    
-    imshow("output",output);
-    imshow("u", uup);
-    imshow("v",vup);
-    waitKey(0);
+    #ifndef _NOSHOW
+        imshow("output",output);
+        imshow("u", uup);
+        imshow("v",vup);
+        waitKey(0);
+    #endif
+
 
 }
 
