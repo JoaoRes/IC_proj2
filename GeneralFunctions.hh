@@ -38,7 +38,10 @@ int GeneralFunctions::calculateM(int sum, int frames){
     double mean = (double) sum/frames;
     int m = ceil(-1/log2(mean/(mean+1.0)));
 
-    return m;
+    if(m<0)
+        return m*-1;
+    else
+        return m;
 }
 
 int GeneralFunctions::calculateHistograms(int frames, short* buffer, string type){
@@ -53,7 +56,7 @@ int GeneralFunctions::calculateHistograms(int frames, short* buffer, string type
     double p=0;
     ofstream MyFile;
     string namefile = "hist"+type+".txt";
-    MyFile.open("histMono.txt");
+    MyFile.open(namefile);
 
 
     cout << "----------------     " << type << "      ----------------" << endl;

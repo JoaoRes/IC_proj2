@@ -62,7 +62,7 @@ int predictor(int frames, short* bufferIn, short* bufferOut){
         sum+=bufferOut[i];
 
         #ifdef _DEBUG
-            cout << "Residual -> " << bufferOut[i] << " || Fn -> " << bufferIn[i] << endl;
+            //cout << "Residual -> " << bufferOut[i] << " || Fn -> " << bufferIn[i] << endl;
         #endif
     }
 
@@ -85,6 +85,7 @@ void losslessEncoder(int m, int frames, short* buffer){
         #endif
         b.writeNBits(gCode);
     }
+
     b.close();
 }
 
@@ -152,8 +153,12 @@ int main(int argc, char* argv[]){
 
     losslessEncoder(m, frames, bufferResidual);
 
+    cout << "----------------  ENCODING COMPLETE  ----------------" << endl;
+
     // ----------- LOSSLESS DECODING --------------
     losslessDecoder(m, frames, s1, sfinfo);
+
+    cout << "----------------  DECODING COMPLETE  ----------------" << endl;
 
     return 0;
 }

@@ -2,10 +2,11 @@
 ex4
 *.wav
 encode_output.txt
-histMono.txt
-histResidual.txt
+histMONO.txt
+histRESIDUAL.txt
 lossy_encoded_output.txt
 lossless_encoded_output.txt
+a.txt
 *.prop
 
 #Binary files
@@ -13,5 +14,6 @@ partB
 ex2
 ex4
 open
-lossless
+losslessCodec_audio
 lossy
+img.bin

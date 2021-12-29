@@ -1,8 +1,11 @@
 #include <iostream>
 #include <math.h>
 #include <bits/stdc++.h>
+#include <vector>
+#include <fstream>
 #include "Golomb.hh"
 #include "BitStream.hh"
+#include "GeneralFunctions.hh"
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
@@ -11,15 +14,17 @@
 
 using namespace std;
 using namespace cv;
+vector<int> codes_length;
 
 class LosslessCodec{
     public:
         void encode(string path);
-        void decode();
+        void decode(string path);
     private:
         Mat yuv;
         void YUV420(Mat img, Mat* yuv_channels);
-        Mat predictor(Mat img);
+        Mat predictorEncode(Mat img);
+        Mat predictorDecode(Mat img);
         int calculate_m(Mat matrix);
         double calculate_entropy(Mat y);
 
@@ -30,6 +35,7 @@ void LosslessCodec::YUV420(Mat img, Mat* yuv_channels){
     // cvtColor(img, img, COLOR_RGB2YUV_I420);
     split(img, yuv_channels);
 
+    imshow("img", yuv_channels[0]);
     Mat tmp_u (img.size().height/2, img.size().width/2, CV_8UC1);
     Mat tmp_v (img.size().height/2, img.size().width/2, CV_8UC1);
 
@@ -43,12 +49,11 @@ void LosslessCodec::YUV420(Mat img, Mat* yuv_channels){
         u_i++; v_i++;
         u_j = v_j = 0;
     }
-
     yuv_channels[1] = tmp_u;
     yuv_channels[2] = tmp_v;
 }
 
-Mat LosslessCodec::predictor(Mat img){
+Mat LosslessCodec::predictorEncode(Mat img){
     Mat error (img.size().height, img.size().width, CV_8UC1);
     int a=0,b=0,c=0,x;
     for (int i=0; i < img.size().height ; i++){
@@ -84,7 +89,7 @@ Mat LosslessCodec::predictor(Mat img){
                 x = a+b-c;
             }
 
-            error.at<uchar>(i,j) = img.at<uchar>(i,j) - (uchar) x ;
+            error.at<uchar>(i,j) = (int) img.at<uchar>(i,j) - x;
             
         }
     }
@@ -92,43 +97,162 @@ Mat LosslessCodec::predictor(Mat img){
     return error;
 }
 
+Mat LosslessCodec::predictorDecode(Mat img){
+    Mat original (img.size().height, img.size().width, CV_8UC1);
+    int a=0,b=0,c=0,x;
+    for (int i=0; i < img.size().height ; i++){
+        for( int j=0 ; j< img.size().width ; j++){
+            if(i==0 and j==0){
+                a = 0;
+                b = 0;
+                c = 0;
+            }
+            else if (i==0 and j!=0){
+                b = 0;
+                c = 0;
+                a =(int) img.at<uchar>(i,j-1);
+            }
+            else if(i!=0 and j==0){
+                a = 0;
+                c = 0;
+                b =(int) img.at<uchar>(i-1,j);
+            }
+            else{
+                a =(int) img.at<uchar>(i,j-1);
+                b =(int) img.at<uchar>(i-1,j);
+                c =(int) img.at<uchar>(i-1,j-1);
+            }
+            
+            if(c >= max(a,b)){
+                x = min(a,b);
+            }
+            else if (c <= min(a,b)){
+                x = max(a,b);
+            }
+            else{
+                x = a+b-c;
+            }
+            
+            original.at<uchar>(i,j) = (int) img.at<uchar>(i,j) +  x ;
+            
+        }
+    }
+
+    return original;
+}
 
 
+GeneralFunctions gf;
 void LosslessCodec::encode(string path){
+    
     Mat img = imread(path);
     Mat channels[3];
     YUV420(img,channels);
 
     Mat error[3];
     for(int i =0 ; i<3 ; i++){
-        error[i] = predictor(channels[i]);
+        error[i] = predictorEncode(channels[i]);
     }
 
     Golomb g;
     BitStream bs = BitStream("","img.bin");
-    int m, val;
+    int m[3], val;
     string bits;
-    for(int k=0;k<3;k++){
-        m=calculate_m(error[k]);
-        cout << "M -> " << m << endl;
+    for( int k =0;k<3;k++){
+        m[k]=calculate_m(error[k]);
+        bits= g.decToBinary(m[k]);
+        bs.writeNBits(bits);
+        codes_length.push_back(bits.length());
+        bits = g.decToBinary((int)error[k].size().height);
+        bs.writeNBits(bits);
+        codes_length.push_back(bits.length());
+        bits = g.decToBinary((int)error[k].size().width);
+        codes_length.push_back(bits.length());
+        bs.writeNBits(bits);
+    }
 
+    for(int k=0;k<3;k++){
+       
 
         for(int i=0;i<error[k].size().height;i++){
             for(int j=0; j<error[k].size().width;j++){
                 val = error[k].at<uchar>(i,j);
-                bits = g.encoder(val,m);
+                bits = g.encoder(val,m[k]);
+                codes_length.push_back(bits.length());
                 bs.writeNBits(bits);
             }
         }
-        
-        cout << "size " << error[k].size().height * error[k].size().width << endl;
+
     }
+
+    bs.close();
     double media =0;
     media = (calculate_entropy(channels[0]) + calculate_entropy(channels[1])+ calculate_entropy(channels[2])) / 3;
     cout <<"MEDIA ENTROPIA -> "<< media << endl;
 }
 
-void LosslessCodec::decode(){
+void LosslessCodec::decode(String path){
+    BitStream b (path , "");
+    string code;
+    Golomb g;
+    short nINt;
+    short n;
+    int m[3], altura[3], largura[3];
+    int i=0;
+    int k;
+
+    for(k=0 ; k< 3; k++){
+        code = b.readNBits(codes_length.at(i));
+        m[k] = stoi(code,0,2);
+        code = b.readNBits(codes_length.at(i+1));
+        altura[k] = stoi(code,0,2);
+        code = b.readNBits(codes_length.at(i+2));
+        largura[k] = stoi(code,0,2);
+        i+=3;
+    }
+    
+    k=9;
+    Mat y(altura[0], largura[0], CV_8UC1);
+    Mat u(altura[1], largura[1], CV_8UC1);
+    Mat v(altura[2], largura[2], CV_8UC1);
+
+
+    for(int j = 0 ; j < altura[0] ; j++){
+        for (int x =0 ; x < largura[0]; x++){
+            code = b.readNBits(codes_length.at(k));
+            nINt = g.decoder(code,m[0]);
+            y.at<uchar>(j,x) = (uchar) nINt;
+            k++;
+        }
+    }
+
+    for(int j = 0 ; j < altura[1] ; j++){
+        for (int x =0 ; x < largura[1]; x++){
+            code = b.readNBits(codes_length.at(k));
+            nINt = g.decoder(code,m[1]);
+            u.at<uchar>(j,x) = (uchar) nINt;
+            k++;
+        }
+    }
+
+    for(int j = 0 ; j < altura[2] ; j++){
+        for (int x =0 ; x < largura[2]; x++){
+            code = b.readNBits(codes_length.at(k));
+            nINt = g.decoder(code,m[2]);
+            v.at<uchar>(j,x) = (uchar) nINt;
+            k++;
+        }
+    }
+
+
+    Mat original[3];
+    original[0] = predictorDecode(y);
+    original[1] = predictorDecode(u);
+    original[2] = predictorDecode(v);
+
+    
+    imshow("orignal1", original[0]);
+    waitKey(0);
 
 }
 
