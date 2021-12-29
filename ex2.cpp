@@ -10,20 +10,24 @@ using namespace std;
 int main(int argc, char* argv[]){
     
     BitStream bstream("test.txt", "result.txt");
-    // for(int x : bstream.getBuffer()){
-    //     bstream.writeBit(x);
-    // }
+    
+    // test.txt contem um 'a'
+    // deverão ser impressos os primeiros 5 bits
+    // da representação ascii de 'a' 
+    for(char x : bstream.readNBits(5)){
+        cout << x;
+    }
+    cout << endl;
 
-    // int b = bstream.readBit();
-    // cout << b << endl;
-
-    bstream.writeNBits("01100001");
-
-    // vector<int> a = bstream.readNBits(5);
-    //printf("%d", a);
-
-    // for(int x : a){
-    //     printf("%d", x);
-    // }
+    bstream.writeNBits("0110000111");
     bstream.close();
+    // como só é possivel escrever 1 byte
+    // são adicionados '0' no final para completar 1 byte
+
+    BitStream bstream1("result.txt", "");
+    string a = bstream1.readNBits(10);
+
+    cout << a << endl; // deverá ser impresso os bits anteriormente escritos no ficheiro
+
+    bstream1.close();
 }

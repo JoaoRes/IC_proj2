@@ -11,3 +11,5 @@ rm -rf *.prop
 rm -rf lossy
 rm -rf lossless
 
+
+rm -rf result.txt
