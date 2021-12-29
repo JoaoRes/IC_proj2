@@ -1,14 +1,11 @@
-#include <stdio.h>
 #include <iostream>
-#include <fstream>
 #include <vector>
-#include <string>
 #include <sndfile.h>
-#include <map>
 #include "BitStream.hh"
 #include "Golomb.hh"
 #include "GeneralFunctions.hh"
-
+#include <chrono>
+using namespace std::chrono;
 using namespace std;
 
 short *bufferMono;
@@ -115,22 +112,26 @@ void losslessDecoder(int m, int frames, char* file, SF_INFO sfinfo){
         #endif
     }
 
-    int rdData = sf_write_short(outFile, buffer, frames);
+    sf_write_short(outFile, buffer, frames);
 
     sf_close(outFile);
     b.close();
 }
 
 int main(int argc, char* argv[]){
-    char* s = "AudioSampleFiles/sample01.wav";
-    char* s1 = "xxxxxx.wav";
+
+    char s1[] = "xxxxxx.wav";
     // args verification
 
+    if(argc<1){
+        printf("\nMissing arguments");
+        exit(1);
+    }
 
     SF_INFO sfinfo;
 
     // read wav File
-    sfinfo = readFile(s, sfinfo);
+    sfinfo = readFile(argv[1], sfinfo);
     int frames = sfinfo.frames;
     
     bufferResidual = (short * ) malloc(frames * sizeof(short));
