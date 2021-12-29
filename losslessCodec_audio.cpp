@@ -120,7 +120,9 @@ void losslessDecoder(int m, int frames, char* file, SF_INFO sfinfo){
 }
 
 int main(int argc, char* argv[]){
-
+    #ifdef _TIMES
+        auto start = high_resolution_clock::now();
+    #endif
     char s1[] = "xxxxxx.wav";
     // args verification
 
@@ -142,22 +144,62 @@ int main(int argc, char* argv[]){
         cout << "frames: " << frames << endl;
     #endif
     // ----------- LOSSLESS ENCODER ---------------
+    #ifdef _TIMES
+        auto pred_start = high_resolution_clock::now();
+    #endif
     int sum = predictor(frames, bufferMono, bufferResidual);
-
+    #ifdef _TIMES
+        auto pred_end = high_resolution_clock::now();
+        auto calculateM_start = high_resolution_clock::now();
+    #endif
     int m = gf.calculateM(sum, frames);
     cout << "----------------     OPTIMAL M      ----------------" << endl;
     cout << "M -> " << m << endl;
-
+    #ifdef _TIMES
+        auto calculateM_end = high_resolution_clock::now();
+        auto hist_start = high_resolution_clock::now();
+    #endif
     gf.calculateHistograms(frames, bufferMono, "MONO");
     gf.calculateHistograms(frames, bufferResidual, "RESIDUAL");
+    #ifdef _TIMES
+        auto hist_end = high_resolution_clock::now();
+        auto losslessCoding_start = high_resolution_clock::now();
+    #endif
 
     losslessEncoder(m, frames, bufferResidual);
-
+    #ifdef _TIMES
+        auto losslessCoding_end = high_resolution_clock::now();
+        auto losslessDecoding_start = high_resolution_clock::now();
+    #endif
     cout << "----------------  ENCODING COMPLETE  ----------------" << endl;
 
     // ----------- LOSSLESS DECODING --------------
     losslessDecoder(m, frames, s1, sfinfo);
+    #ifdef _TIMES
+        auto losslessDecoding_end = high_resolution_clock::now();
+        auto end = high_resolution_clock::now();
+        auto predictor_duration = duration_cast<milliseconds>(pred_end - pred_start);
+        auto calculateM_duration = duration_cast<microseconds>(calculateM_end - calculateM_start);
+        auto hist_duration = duration_cast<milliseconds>(hist_end - hist_start);
+        auto losslessCoding_duration = duration_cast<milliseconds>(losslessCoding_end - losslessCoding_start);
+        auto losslessDecoding_duration = duration_cast<milliseconds>(losslessDecoding_end - losslessDecoding_start);
+        auto total_duration = duration_cast<milliseconds>(end - start);
+        cout << "Predictor Time = "<< (double)predictor_duration.count()/1000 << " seconds | "<< predictor_duration.count() << " milliseconds" << endl;
+        cout << "Calc M Time = "<< (double)calculateM_duration.count()/1000 << " miliseconds | "<< calculateM_duration.count() << " microseconds" << endl;
+        cout << "Histogram Time = "<< (double)hist_duration.count()/1000 << " seconds | "<< hist_duration.count() << " milliseconds" << endl;
+        cout << "Encoding Time = "<< (double)losslessCoding_duration.count()/1000 << " seconds | "<< losslessCoding_duration.count() << " milliseconds" << endl;
+        cout << "Decoding Time = "<< (double)losslessDecoding_duration.count()/1000 << " seconds | "<< losslessDecoding_duration.count() << " milliseconds" << endl;
+        cout << "Total Time = "<< (double)total_duration.count()/1000 << " seconds | "<< total_duration.count() << " milliseconds" << endl;
 
+    ofstream MyFile;
+    MyFile.open(argv[2]);
+
+    MyFile <<argv[1]<<";;:;"<< total_duration.count()<<"\t"<< predictor_duration.count()<<"\t"<< hist_duration.count()<<"\t"
+    << losslessCoding_duration.count()<<"\t"<< losslessDecoding_duration.count()<<"\t"<<ceil(m)<<"\t" <<endl;
+
+    MyFile.close();
+
+    #endif
     cout << "----------------  DECODING COMPLETE  ----------------" << endl;
 
     return 0;
