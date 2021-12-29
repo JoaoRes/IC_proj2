@@ -3,14 +3,14 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <sndfile.h>
+#include <math.h>
 #include <map>
-// #include "BitStream.hh"
-// #include "Golomb.hh"
+#include <sndfile.h>
+
+using namespace std;
 
 class GeneralFunctions{
     public:
-        SF_INFO readFile(char* inFile, short* bufferMono);
         short folding(short residual);
         short defolding(short n);
         int calculateM(int sum, int frames);
@@ -19,33 +19,7 @@ class GeneralFunctions{
         SF_INFO sfinfo;
 };
 
-SF_INFO GeneralFunctions::readFile(char* inFile, short* bufferMonoChannel){
-    SNDFILE* audioFile;
-    sfinfo.format=0;
-
-    audioFile=sf_open(inFile, SFM_READ, &sfinfo);
-
-    int numItems = (int) sfinfo.frames * sfinfo.channels; 
-    short* buffer = (short * ) malloc(numItems * sizeof(short));
-    bufferMonoChannel = (short *) malloc(sfinfo.frames * sizeof(short));
-
-    int cntData = sf_read_short(audioFile, buffer, numItems);
-
-    for(int i=0; i<cntData ; i+=2){
-        int avg=(buffer[i]+buffer[i+1])/2;
-        bufferMonoChannel[i/2]= (short)avg;
-    }
-
-    for (int i=0 ; i<sfinfo.frames ; i++){
-        cout << "BufferMono[" << i << "]: " << bufferMonoChannel[i] << endl;
-    }
-
-    sf_close(audioFile);
-    return sfinfo;
-}
-
 short GeneralFunctions::folding(short residual){
-    cout << "merda" << endl;
     if(residual >= 0) residual = residual*2;
     else residual = residual*(-2) - 1;
     return residual;

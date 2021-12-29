@@ -16,6 +16,27 @@ short *bufferResidual;
 vector<int> codes_length;
 GeneralFunctions gf;
 
+SF_INFO readFile(char* inFile, SF_INFO sfinfo){
+    SNDFILE* audioFile;
+    sfinfo.format=0;
+
+    audioFile=sf_open(inFile, SFM_READ, &sfinfo);
+
+    int numItems = (int) sfinfo.frames * sfinfo.channels; 
+    short* buffer = (short * ) malloc(numItems * sizeof(short));
+    bufferMono = (short * ) malloc(sfinfo.frames * sizeof(short));
+
+    int cntData = sf_read_short(audioFile, buffer, numItems);
+
+    for(int i=0; i<cntData ; i+=2){
+        int avg=(buffer[i]+buffer[i+1])/2;
+        bufferMono[i/2]= (short)avg;
+    }
+
+    sf_close(audioFile);
+    return sfinfo;
+}
+
 int fLinha_calc(int i, short* buffer){
     int fLinha;
     if(i>2){
@@ -40,7 +61,6 @@ int predictor(int frames, short* bufferIn, short* bufferOut){
 
         value = bufferIn[i] - fLinha;
 
-        cout << "merda" << endl;
         bufferOut[i] = gf.folding(value);
         sum+=bufferOut[i];
 
@@ -99,8 +119,8 @@ void losslessDecoder(int m, int frames, char* file, SF_INFO sfinfo){
         }
         buffer[i]=(short) n+fLinha;
         #ifdef _DEBUG
-            cout << i << "/" << frames << "-> code: " << code << " | nINT(Residual): " << nINT << " | BUFFER_RESIDUAL: " << bufferResidual[i] << " | n(defolded): " << n;
-            cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
+            // cout << i << "/" << frames << "-> code: " << code << " | nINT(Residual): " << nINT << " | BUFFER_RESIDUAL: " << bufferResidual[i] << " | n(defolded): " << n;
+            // cout << " | DECODED -> " << buffer[i] << " | MONOBUFFER -> " << bufferMono[i] << endl;
         #endif
     }
 
@@ -119,12 +139,8 @@ int main(int argc, char* argv[]){
     SF_INFO sfinfo;
 
     // read wav File
-    sfinfo = gf.readFile(s, bufferMono);
+    sfinfo = readFile(s, sfinfo);
     int frames = sfinfo.frames;
-    
-    for (int i=0 ; i<frames ; i++){
-        cout << "BufferMono[" << i << "]: " << bufferMono[i] << endl;
-    }
     
     bufferResidual = (short * ) malloc(frames * sizeof(short));
 
@@ -134,7 +150,6 @@ int main(int argc, char* argv[]){
     #endif
     // ----------- LOSSLESS ENCODER ---------------
     int sum = predictor(frames, bufferMono, bufferResidual);
-    cout << "merda" << endl;
 
     int m = gf.calculateM(sum, frames);
     cout << "----------------     OPTIMAL M      ----------------" << endl;
