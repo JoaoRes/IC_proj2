@@ -4,7 +4,7 @@
 ### ex2
 ####**Compile:**
 ```console 
-g++ -g -Wall x.cpp -o x
+g++ -g x.cpp -o x
 ```
 ####**Execute:**
 ```console 
@@ -13,7 +13,7 @@ g++ -g -Wall x.cpp -o x
 ### ex4
 ####**Compile:**
 ```console 
-g++ -g -Wall x.cpp -o x
+g++ -g x.cpp -o x
 ```
 ####**Execute:**
 ```console 
@@ -26,19 +26,27 @@ g++ -g -Wall x.cpp -o x
 ### Lossless
 ####**Compile:** 
 ```console 
-g++ -g -Wall losslessCodec_audio.cpp -o lossless -lsndfile && ./remove.sh 
+g++ -g losslessCodec_audio.cpp -o lossless -lsndfile && ./remove.sh 
 ```
 ####**Execute:**
+You need to pass as argument to the program the path to the wav song, in our case to test we 
+are going to use `AudioSampleFiles/sample01.wav` as wav file
 ```console 
-./lossless
+./lossless AudioSampleFiles/sample01.wav
 ```
 ### Lossy
 ####**Compile:**
 ```console 
-g++ -g -Wall lossyCodec_audio.cpp -o lossless -lsndfile && ./remove.sh 
+g++ -g lossyCodec_audio.cpp -o lossless -lsndfile && ./remove.sh 
 ```
 ####**Execute:**
 ```console 
 ./lossy
 ```
+
+#Compilation arguments
+
+* `-Wall` Show all warnings and errors
+* `-D _DEBUG` Show Debug Prints
+* `-D _TIMES` Calculate execution times
 
