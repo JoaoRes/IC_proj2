@@ -10,3 +10,5 @@ rm -rf histMono.txt
 rm -rf lossy
 rm -rf lossless
 
+
+rm -rf result.txt

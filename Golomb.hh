@@ -99,23 +99,12 @@ short Golomb::decoder(string code, int m){
         binary_r="0";
     }
 
-    // cout << "CODE        -> " << code << endl;
-    // cout << "SEPARATION  -> " << separation << endl;
-    // cout << "code length -> " << code.length() << endl;
-    // cout << "UNARY_Q     -> " << unary_q << endl;
-    // cout << "BINARY_R    -> " << binary_r << endl;
-
-
     //quotient convertion - unary to decimal
     int q = unary_q.size();
     value = q*m;
 
-    // cout << "Q           -> " << q << endl;
-
     //remainder convertion - binary to decimal
     int r = (int) stoull(binary_r, 0, 2);
-    // cout << "R           -> " << r << endl;
-
     
     //if m is power of 2
     if(ceil(log2(m)) == floor(log2(m))){
