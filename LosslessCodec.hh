@@ -98,7 +98,7 @@ Mat LosslessCodec::predictorEncode(Mat img){
 }
 
 Mat LosslessCodec::predictorDecode(Mat img){
-    Mat original (img.size().height, img.size().width, CV_8UC1);
+    Mat original (img.size().height,img.size().width, CV_8UC1);
     int a=0,b=0,c=0,x;
     for (int i=0; i < img.size().height ; i++){
         for( int j=0 ; j< img.size().width ; j++){
@@ -110,17 +110,17 @@ Mat LosslessCodec::predictorDecode(Mat img){
             else if (i==0 and j!=0){
                 b = 0;
                 c = 0;
-                a =(int) img.at<uchar>(i,j-1);
+                a =(int) original.at<uchar>(i,j-1);
             }
             else if(i!=0 and j==0){
                 a = 0;
                 c = 0;
-                b =(int) img.at<uchar>(i-1,j);
+                b =(int) original.at<uchar>(i-1,j);
             }
             else{
-                a =(int) img.at<uchar>(i,j-1);
-                b =(int) img.at<uchar>(i-1,j);
-                c =(int) img.at<uchar>(i-1,j-1);
+                a =(int) original.at<uchar>(i,j-1);
+                b =(int) original.at<uchar>(i-1,j);
+                c =(int) original.at<uchar>(i-1,j-1);
             }
             
             if(c >= max(a,b)){
@@ -133,7 +133,7 @@ Mat LosslessCodec::predictorDecode(Mat img){
                 x = a+b-c;
             }
             
-            original.at<uchar>(i,j) = (int) img.at<uchar>(i,j) +  x ;
+            original.at<uchar>(i,j) = (int) img.at<uchar>(i,j) + x ;
             
         }
     }
@@ -250,8 +250,38 @@ void LosslessCodec::decode(String path){
     original[1] = predictorDecode(u);
     original[2] = predictorDecode(v);
 
+    Mat uup(altura[0], largura[0], CV_8UC1);
+    Mat vup(altura[0], largura[0], CV_8UC1);
+
+    int u_i = 0, v_i = 0;
+    int u_j = 0, v_j = 0;
+    for (int i = 0; i < altura[0]; i+=2) {
+        for (int j = 0; j < largura[0]; j+=2) {
+            uup.at<uchar>(i,j) = original[1].at<uchar>(u_i,u_j+1);
+            uup.at<uchar>(i+1,j) = original[1].at<uchar>(u_i,u_j+1);
+            uup.at<uchar>(i,j+1) = original[1].at<uchar>(u_i,u_j+1);
+            uup.at<uchar>(i+1,j+1) = original[1].at<uchar>(u_i,u_j+1);
+            vup.at<uchar>(i,j) = original[2].at<uchar>(v_i,v_j+1);
+            vup.at<uchar>(i+1,j) = original[2].at<uchar>(v_i,v_j+1);
+            vup.at<uchar>(i,j+1) = original[2].at<uchar>(v_i,v_j+1);
+            vup.at<uchar>(i+1,j+1) = original[2].at<uchar>(v_i,v_j+1);
+            u_j++;v_j++;
+        }
+        u_i++; v_i++;
+        u_j = v_j = 0;
+    }
+
+    cout<< uup.size().height<< endl;
+
+    Mat channels[3] = {original[0],uup,vup};
+    Mat output;
+    merge(channels,3,output);
+
+    cvtColor(output,output, COLOR_YUV2RGB);
     
-    imshow("orignal1", original[0]);
+    imshow("output",output);
+    imshow("u", uup);
+    imshow("v",vup);
     waitKey(0);
 
 }
