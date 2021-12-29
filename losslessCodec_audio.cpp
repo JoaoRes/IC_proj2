@@ -153,8 +153,12 @@ int main(int argc, char* argv[]){
 
     losslessEncoder(m, frames, bufferResidual);
 
+    cout << "----------------  ENCODING COMPLETE  ----------------" << endl;
+
     // ----------- LOSSLESS DECODING --------------
     losslessDecoder(m, frames, s1, sfinfo);
+
+    cout << "----------------  DECODING COMPLETE  ----------------" << endl;
 
     return 0;
 }

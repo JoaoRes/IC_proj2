@@ -38,7 +38,10 @@ int GeneralFunctions::calculateM(int sum, int frames){
     double mean = (double) sum/frames;
     int m = ceil(-1/log2(mean/(mean+1.0)));
 
-    return m;
+    if(m<0)
+        return m*-1;
+    else
+        return m;
 }
 
 int GeneralFunctions::calculateHistograms(int frames, short* buffer, string type){

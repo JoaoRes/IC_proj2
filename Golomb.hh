@@ -93,7 +93,7 @@ short Golomb::decoder(string code, int m){
     int separation = (int) code.find('0');
     string unary_q = code.substr(0,separation);
     string binary_r;
-    if((separation+1)<code.length()){
+    if((separation+1)<(int)code.length()){
         binary_r = code.substr(separation+1);
     }else{
         binary_r="0";
