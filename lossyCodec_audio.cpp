@@ -267,6 +267,14 @@ int main(int argc, char* argv[]){
         cout << "Encoding Time = "<< (double)lossyCoding_duration.count()/1000 << " seconds | "<< lossyCoding_duration.count() << " milliseconds" << endl;
         cout << "Decoding Time = "<< (double)lossyDecoding_duration.count()/1000 << " seconds | "<< lossyDecoding_duration.count() << " milliseconds" << endl;
         cout << "Total Time = "<< (double)total_duration.count()/1000 << " seconds | "<< total_duration.count() << " milliseconds" << endl;
+
+        ofstream MyFile;
+        MyFile.open(argv[2]);
+
+        MyFile <<argv[1]<<";;:;"<< total_duration.count()<<"\t"<< hist_duration.count()<<"\t"<< lossyCoding_duration.count()<<"\t"<< lossyDecoding_duration.count()<<"\t"<<entrMono<<"\t" <<endl;
+
+        MyFile.close();
+
     #endif
     return 0;
 }

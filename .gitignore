@@ -6,7 +6,7 @@ histMono.txt
 histResidual.txt
 lossy_encoded_output.txt
 lossless_encoded_output.txt
-
+*.prop
 
 #Binary files
 partB
