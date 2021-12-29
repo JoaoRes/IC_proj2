@@ -53,7 +53,7 @@ int GeneralFunctions::calculateHistograms(int frames, short* buffer, string type
     double p=0;
     ofstream MyFile;
     string namefile = "hist"+type+".txt";
-    MyFile.open("histMono.txt");
+    MyFile.open(namefile);
 
 
     cout << "----------------     " << type << "      ----------------" << endl;
