@@ -116,5 +116,5 @@ To use compilation arguments these alguments should be after `-g` ex:
 # Clean
 You can clean all the repository just running 
 ```console 
-./remove.sh
+./remove_all.sh
 ``` 

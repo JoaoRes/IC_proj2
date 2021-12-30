@@ -7,8 +7,6 @@ rm -rf lossless_encoded_output.txt
 rm -rf zzz.wav
 rm -rf img.bin
 rm -rf histMono.txt
-rm -rf lossy
-rm -rf lossless
 
 
 rm -rf result.txt
