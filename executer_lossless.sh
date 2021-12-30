@@ -3,7 +3,7 @@ g++ -g -Wall -D _TIMES  losslessCodec_audio.cpp -o lossless -lsndfile
 echo "Code Compiled"
 for i in $(seq 1 7)
 do
-   echo "Doing iteration $i"
+   echo "\nDoing iteration $i"
    ./remove.sh &&
    ./lossless AudioSampleFiles/sample0$i.wav  $i.prop >/dev/null 2>&1 &&   
    echo "Execution $i Done" && 

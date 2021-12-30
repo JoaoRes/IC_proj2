@@ -4,7 +4,7 @@ echo "Code Compiled"
 images="airplane baboon boat girl house lena monarch peppers tulips"
 for i in $images
 do
-   echo "Doing iteration $i.ppm"
+   echo "\nDoing iteration $i.ppm"
    ./remove.sh &&
    ./test_Lossless_Image imagens_PPM/$i.ppm $i.prop >/dev/null 2>&1 &&   
    echo "Execution $i Done" && 
